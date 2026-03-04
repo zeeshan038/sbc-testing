@@ -15,9 +15,11 @@ import {
 } from "lucide-react";
 
 // Top navigation items
+import { Video as VideoIcon } from "lucide-react";
 const navItems = [
     { icon: CloudUpload, label: "My Uploads", path: "/my-account/uploads" },
     { icon: DownloadCloud, label: "Received", path: "/my-account/received" },
+    { icon: VideoIcon, label: "Videos", path: "/my-account/videos" },
     { icon: ImageIcon, label: "Backgrounds", path: "/my-account/backgrounds" },
     { icon: Users, label: "Sub-users", path: "/my-account/sub-users" },
     { icon: Lock, label: "Security", path: "/my-account/password" },
@@ -36,17 +38,12 @@ const Account = () => {
     return (
         <div className="min-h-screen w-full font-sans overflow-hidden" style={{ background: '#f8fafc' }}>
 
-            {/* Background Texture */}
             <div className="absolute inset-0 opacity-[0.4] pointer-events-none mix-blend-overlay"
                 style={{ backgroundImage: 'radial-gradient(circle at 50% -20%, #e0e7ff 0%, transparent 60%)' }} />
 
-            {/* ── TOP HEADER / NAVIGATION ── */}
             <header className="relative w-full z-40 bg-white/70 backdrop-blur-3xl border-b border-indigo-50/80 shadow-[0_4px_32px_rgba(0,0,0,0.03)] mt-[80px] lg:mt-[90px]">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
-
-
-                    {/* Middle: Horizontal Nav Tabs */}
                     <nav className="hidden lg:flex items-center gap-1.5 bg-slate-50 border border-slate-100 p-1 rounded-2xl shadow-inner">
                         {navItems.map((item, idx) => {
                             const isActive = idx === (activeIdx >= 0 ? activeIdx : 0);
@@ -58,7 +55,6 @@ const Account = () => {
                                     onMouseLeave={() => setHoveredIdx(null)}
                                     className="relative px-5 py-2.5 rounded-xl text-[13px] font-bold outline-none transition-colors z-10 block"
                                 >
-                                    {/* Active Tab Background */}
                                     {isActive && (
                                         <motion.div
                                             layoutId="accountTopbarActive"
@@ -68,7 +64,6 @@ const Account = () => {
                                         />
                                     )}
 
-                                    {/* Hover Background */}
                                     {!isActive && hoveredIdx === idx && (
                                         <motion.div
                                             layoutId="accountTopbarHover"
@@ -87,7 +82,6 @@ const Account = () => {
                         })}
                     </nav>
 
-                    {/* Right: User Profile Dropdown */}
                     <div className="relative">
 
 
@@ -123,7 +117,6 @@ const Account = () => {
                 </div>
             </header>
 
-            {/* ── MAIN CONTENT OUTLET ── */}
             <div className="pt-6 px-4 pb-12 min-h-screen">
                 <div className="max-w-7xl mx-auto flex gap-8">
 
