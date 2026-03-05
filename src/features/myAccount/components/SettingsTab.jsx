@@ -24,27 +24,44 @@ const Toggle = ({ checked, onChange, color = '#2b3a8c' }) => (
 );
 
 /* ── input field ── */
-const Field = ({ label, icon: Icon, type = 'text', placeholder, defaultValue, readOnly = false, hint }) => (
-    <div className="flex flex-col gap-1.5">
-        <label className="text-[12px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-            {Icon && <Icon className="w-3.5 h-3.5" />}
+const Field = ({ label, icon: Icon, type = 'text', placeholder, defaultValue, readOnly = false, hint, options }) => (
+    <div className="flex flex-col gap-2">
+        <label className="text-[13px] font-bold text-gray-700 flex items-center gap-1.5 ml-1">
             {label}
         </label>
-        <div className="relative group">
-            <input
-                type={type}
-                defaultValue={defaultValue}
-                placeholder={placeholder}
-                readOnly={readOnly}
-                className={`w-full px-4 py-3 rounded-xl text-[14px] font-medium outline-none transition-all border
-                    ${readOnly
-                        ? 'bg-gray-50 border-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-white border-gray-200 text-gray-800 focus:border-[#2b3a8c] focus:ring-4 focus:ring-[#2b3a8c]/8 shadow-sm group-hover:border-gray-300'
-                    }
-                `}
-            />
+        <div className="relative group/input">
+            <div className={`absolute inset-0 rounded-2xl transition-all ${readOnly ? 'bg-gray-50/80 border border-gray-100' : 'bg-gradient-to-b from-gray-50/50 to-gray-100/30 border border-gray-200 group-focus-within/input:ring-4 group-focus-within/input:ring-[#2b3a8c]/10 group-focus-within/input:border-[#2b3a8c] group-focus-within/input:bg-white group-hover/input:border-gray-300'}`} />
+
+            {Icon && (
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center">
+                    <Icon className={`w-4.5 h-4.5 transition-colors ${readOnly ? 'text-gray-300' : 'text-gray-400 group-focus-within/input:text-[#2b3a8c]'}`} />
+                </div>
+            )}
+
+            {options ? (
+                <select
+                    className={`relative w-full bg-transparent outline-none text-[14px] font-semibold px-4 py-3.5 z-10 appearance-none cursor-pointer ${Icon ? 'pl-[44px]' : ''} ${readOnly ? 'text-gray-400 cursor-not-allowed' : 'text-gray-800'}`}
+                    defaultValue={defaultValue}
+                >
+                    <option value="" disabled>{placeholder}</option>
+                    {options.map((opt, i) => <option key={i} value={opt.value}>{opt.label}</option>)}
+                </select>
+            ) : (
+                <input
+                    type={type}
+                    defaultValue={defaultValue}
+                    placeholder={placeholder}
+                    readOnly={readOnly}
+                    className={`relative w-full bg-transparent outline-none text-[14px] font-semibold px-4 py-3.5 z-10 ${Icon ? 'pl-[44px]' : ''} ${readOnly ? 'text-gray-400 cursor-not-allowed' : 'text-gray-800 placeholder-gray-400'}`}
+                />
+            )}
         </div>
-        {hint && <p className="text-[11px] text-gray-400 font-medium">{hint}</p>}
+        {hint && (
+            <p className="text-[12px] text-gray-400 font-medium ml-1 mt-0.5 flex items-start gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                {hint}
+            </p>
+        )}
     </div>
 );
 
@@ -192,63 +209,61 @@ const SettingsTab = () => {
                             </div>
 
                             {/* Form card */}
-                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-6">
-                                <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-                                    <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center">
-                                        <User className="w-4 h-4 text-[#2b3a8c]" />
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8 flex flex-col gap-6">
+                                <div className="pb-4 border-b border-gray-100">
+                                    <h3 className="text-[16px] font-bold text-gray-900 tracking-tight">Personal Information</h3>
+                                    <p className="text-[13px] text-gray-500 mt-1">Update your personal details below.</p>
+                                </div>
+
+                                <div className="flex flex-col gap-5">
+                                    <Field label="Email address" type="email" defaultValue="zeeshandev038@gmail.com" readOnly hint="Email cannot be changed directly. Contact support to update this field." />
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <Field label="First name" placeholder="First name" defaultValue="Muhammad Zeeshan" />
+                                        <Field label="Last name" placeholder="Last name" />
                                     </div>
-                                    <div>
-                                        <h3 className="text-[15px] font-bold text-gray-900">Personal Information</h3>
-                                        <p className="text-[12px] text-gray-400">Update your personal details</p>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <Field label="Company (Optional)" placeholder="Your company name" />
+                                        <Field label="VAT number" placeholder="VAT number" />
                                     </div>
                                 </div>
 
-                                <Field label="Email address" icon={Mail} type="email" defaultValue="zeeshandev038@gmail.com" readOnly hint="Email cannot be changed. Contact support to update." />
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <Field label="First name" icon={User} placeholder="First name" defaultValue="Muhammad Zeeshan" />
-                                    <Field label="Last name" icon={User} placeholder="Last name" />
-                                </div>
-
-                                <Field label="Company (Optional)" icon={Briefcase} placeholder="Your company name" />
-                                <Field label="VAT number" icon={Building2} placeholder="VAT number" />
-
-                                <div className="pt-2 border-t border-gray-100">
-                                    <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-4">
-                                        <MapPin className="w-3.5 h-3.5" /> Address Information
-                                    </p>
-                                    <div className="flex flex-col gap-4">
+                                <div className="pt-2 mt-4">
+                                    <div className="pb-4 border-b border-gray-100 mb-5">
+                                        <h3 className="text-[16px] font-bold text-gray-900 tracking-tight">Address Information</h3>
+                                        <p className="text-[13px] text-gray-500 mt-1">Used for billing and invoicing</p>
+                                    </div>
+                                    <div className="flex flex-col gap-5">
                                         <Field label="Street address" placeholder="123 Main Street" />
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                             <Field label="Postal / Zip code" placeholder="00000" />
                                             <Field label="City" placeholder="City" />
                                         </div>
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-[12px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                                                <Globe className="w-3.5 h-3.5" /> Country
-                                            </label>
-                                            <select className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-[14px] font-medium text-gray-800 outline-none focus:border-[#2b3a8c] focus:ring-4 focus:ring-[#2b3a8c]/8 shadow-sm appearance-none cursor-pointer transition-all">
-                                                <option value="" disabled>Select a country</option>
-                                                <option value="US">🇺🇸 United States</option>
-                                                <option value="UK">🇬🇧 United Kingdom</option>
-                                                <option value="CA">🇨🇦 Canada</option>
-                                                <option value="PK">🇵🇰 Pakistan</option>
-                                            </select>
-                                        </div>
+                                        <Field
+                                            label="Country"
+                                            options={[
+                                                { value: 'US', label: 'United States' },
+                                                { value: 'UK', label: 'United Kingdom' },
+                                                { value: 'CA', label: 'Canada' },
+                                                { value: 'PK', label: 'Pakistan' },
+                                            ]}
+                                            placeholder="Select a country"
+                                        />
                                     </div>
                                 </div>
                             </div>
 
                             {/* Save + danger row */}
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <button className="flex items-center gap-2 text-[13px] font-bold text-red-500 hover:text-red-600 hover:bg-red-50 px-4 py-2.5 rounded-xl transition-all border border-transparent hover:border-red-100">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
+                                <button className="flex items-center gap-2 text-[13px] font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-4 py-2.5 rounded-xl transition-all border border-transparent hover:border-red-100">
                                     <Trash2 className="w-4 h-4" />
                                     Delete account
                                 </button>
                                 <motion.button
-                                    whileHover={{ scale: 1.02, y: -1 }}
+                                    whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#2b3a8c] to-[#1e2a6a] text-white text-[14px] font-bold rounded-xl shadow-lg shadow-[#2b3a8c]/25 transition-all"
+                                    className="flex items-center gap-2 px-8 py-3 bg-[#2b3a8c] hover:bg-[#1e2a6a] text-white text-[14px] font-bold rounded-xl shadow-sm transition-all"
                                 >
                                     <Save className="w-4 h-4" />
                                     Save changes
@@ -328,7 +343,7 @@ const SettingsTab = () => {
 
                 </motion.div>
             </AnimatePresence>
-        </div>
+        </div >
     );
 };
 

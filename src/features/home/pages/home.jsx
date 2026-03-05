@@ -270,8 +270,8 @@ const Home = () => {
                                                 {uploadedFiles.length} {uploadedFiles.length === 1 ? 'item' : 'items'}
                                             </span>
 
-                                            {/* + Add menu */}
-                                            <div className="relative" ref={addMenuRef}>
+                                            {/* + Add menu — hidden for video uploads */}
+                                            {transferType !== 'video' && <div className="relative" ref={addMenuRef}>
                                                 <motion.button
                                                     whileHover={{ scale: 1.06 }}
                                                     whileTap={{ scale: 0.94 }}
@@ -317,7 +317,7 @@ const Home = () => {
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
-                                            </div>
+                                            </div>}
                                         </div>
                                     </motion.div>
                                 )}
@@ -387,35 +387,34 @@ const Home = () => {
                                                 <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200 rounded-xl transition-all group-focus-within/input:ring-4 group-focus-within/input:ring-blue-100 group-focus-within/input:border-blue-400 group-focus-within/input:bg-white group-hover/input:border-gray-300" />
                                                 <input type="email" placeholder="Your email" className="relative w-full bg-transparent outline-none text-[12px] text-gray-800 placeholder-gray-400 font-semibold px-2.5 py-2 z-10" />
                                             </div>
-                                            {/* Title */}
-                                            <div className="relative group/input">
-                                                <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200 rounded-xl transition-all group-focus-within/input:ring-4 group-focus-within/input:ring-blue-100 group-focus-within/input:border-blue-400 group-focus-within/input:bg-white group-hover/input:border-gray-300" />
-                                                <input type="text" placeholder="Title" className="relative w-full bg-transparent outline-none text-[12px] text-gray-800 placeholder-gray-400 font-semibold px-2.5 py-2 z-10" />
-                                            </div>
                                             {/* Message */}
                                             <div className="relative group/input">
                                                 <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200 rounded-xl transition-all group-focus-within/input:ring-4 group-focus-within/input:ring-blue-100 group-focus-within/input:border-blue-400 group-focus-within/input:bg-white group-hover/input:border-gray-300" />
                                                 <textarea placeholder="Message" className="relative w-full bg-transparent outline-none text-[12px] text-gray-800 placeholder-gray-400 font-medium px-2.5 py-2 z-10 resize-none h-[55px]" />
                                             </div>
 
-                                            {/* Expires In */}
-                                            <div className="flex items-center justify-between bg-gray-50/80 border border-gray-200 rounded-xl px-2.5 py-1.5 mt-1">
-                                                <span className="text-[10px] font-bold text-gray-600 flex items-center gap-1">
-                                                    Expires in
-                                                    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-gray-300 text-gray-400 text-[9px] font-bold cursor-help">?</span>
-                                                </span>
-                                                <select
-                                                    value={expiresIn}
-                                                    onChange={(e) => setExpiresIn(e.target.value)}
-                                                    className="bg-transparent outline-none text-[11px] font-bold text-[#2b3a8c] cursor-pointer border-none appearance-none pr-1"
-                                                >
-                                                    <option value="1">1 day</option>
-                                                    <option value="2">2 days</option>
-                                                    <option value="7">7 days</option>
-                                                    <option value="14">14 days</option>
-                                                    <option value="30">30 days</option>
-                                                    <option value="never">Never</option>
-                                                </select>
+                                            {/* Expires In — email */}
+                                            <div className="mt-1">
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">⏰ Expires in</p>
+                                                <div className="relative flex items-center bg-gray-100 rounded-xl p-[3px] gap-[2px]">
+                                                    {[{ v: '1', l: '1d' }, { v: '3', l: '3d' }, { v: '7', l: '7d' }, { v: 'never', l: '∞' }].map(({ v, l }) => (
+                                                        <button
+                                                            key={v}
+                                                            onClick={() => setExpiresIn(v)}
+                                                            className="relative flex-1 text-center text-[10px] font-bold py-1 rounded-lg z-10 transition-colors duration-200 cursor-pointer"
+                                                            style={{ color: expiresIn === v ? '#fff' : '#9ca3af' }}
+                                                        >
+                                                            {expiresIn === v && (
+                                                                <motion.span
+                                                                    layoutId="expiry-pill-email"
+                                                                    className="absolute inset-0 rounded-lg bg-[#2b3a8c] shadow-[0_2px_8px_rgba(43,58,140,0.4)]"
+                                                                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                                                                />
+                                                            )}
+                                                            <span className="relative z-10">{l}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </motion.div>
@@ -432,73 +431,74 @@ const Home = () => {
                                         transition={{ duration: 0.35, ease: "easeInOut" }}
                                         className="overflow-hidden mb-2"
                                     >
-                                        <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col gap-4">
 
-                                            {/* Title + Message — only when 'Send using email' */}
-                                            <AnimatePresence>
-                                                {linkShareType === 'email' && (
-                                                    <motion.div
-                                                        key="link-email-fields"
-                                                        initial={{ opacity: 0, height: 0 }}
-                                                        animate={{ opacity: 1, height: 'auto' }}
-                                                        exit={{ opacity: 0, height: 0 }}
-                                                        transition={{ duration: 0.25 }}
-                                                        className="overflow-hidden flex flex-col gap-2"
-                                                    >
-                                                        <div className="relative group/input">
-                                                            <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200 rounded-xl transition-all group-focus-within/input:ring-4 group-focus-within/input:ring-blue-100 group-focus-within/input:border-blue-400 group-focus-within/input:bg-white group-hover/input:border-gray-300" />
-                                                            <input type="text" placeholder="Title" className="relative w-full bg-transparent outline-none text-[12px] text-gray-800 placeholder-gray-400 font-semibold px-2.5 py-2 z-10" />
-                                                        </div>
-                                                        <div className="relative group/input">
-                                                            <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-gray-100 border border-gray-200 rounded-xl transition-all group-focus-within/input:ring-4 group-focus-within/input:ring-blue-100 group-focus-within/input:border-blue-400 group-focus-within/input:bg-white group-hover/input:border-gray-300" />
-                                                            <textarea placeholder="Message" className="relative w-full bg-transparent outline-none text-[12px] text-gray-800 placeholder-gray-400 font-medium px-2.5 py-2 z-10 resize-none h-[52px]" />
-                                                        </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
 
-                                            {/* How to share */}
-                                            <div>
-                                                <p className="text-[10px] font-bold text-gray-600 mb-1 flex items-center gap-1">
-                                                    How to share the file?
-                                                    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-gray-300 text-gray-400 text-[9px] font-bold cursor-help">?</span>
-                                                </p>
-                                                <div className="flex items-center bg-gray-100/70 rounded-xl p-0.5 gap-0.5">
-                                                    <button onClick={() => setLinkShareType('email')} className={`cursor-pointer flex-1 py-1.5 rounded-[10px] text-[11px] font-bold transition-all ${linkShareType === 'email' ? 'bg-[#2b3a8c] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Send using email</button>
-                                                    <button onClick={() => setLinkShareType('link')} className={`cursor-pointer flex-1 py-1.5 rounded-[10px] text-[11px] font-bold transition-all ${linkShareType === 'link' ? 'bg-[#2b3a8c] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Get a sharable link</button>
-                                                </div>
-                                            </div>
+
+
 
                                             {/* Self Destruct */}
-                                            <div>
-                                                <p className="text-[10px] font-bold text-gray-600 mb-1 flex items-center gap-1">
-                                                    Enable self destruct?
-                                                    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-gray-300 text-gray-400 text-[9px] font-bold cursor-help">?</span>
-                                                </p>
-                                                <div className="flex items-center bg-gray-100/70 rounded-xl p-0.5 gap-0.5">
-                                                    <button onClick={() => setSelfDestruct(false)} className={`cursor-pointer flex-1 py-1.5 rounded-[10px] text-[11px] font-bold transition-all ${!selfDestruct ? 'bg-[#2b3a8c] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>No</button>
-                                                    <button onClick={() => setSelfDestruct(true)} className={`cursor-pointer flex-1 py-1.5 rounded-[10px] text-[11px] font-bold transition-all ${selfDestruct ? 'bg-[#2b3a8c] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>Yes</button>
+                                            <motion.div
+                                                animate={selfDestruct ? {
+                                                    backgroundColor: 'rgba(254,242,242,1)',
+                                                    borderColor: 'rgba(252,165,165,0.6)',
+                                                    boxShadow: '0 0 0 3px rgba(239,68,68,0.08)',
+                                                } : {
+                                                    backgroundColor: 'rgba(249,250,251,0.8)',
+                                                    borderColor: 'rgba(243,244,246,1)',
+                                                    boxShadow: '0 0 0 0px rgba(239,68,68,0)',
+                                                }}
+                                                transition={{ duration: 0.3 }}
+                                                className="flex items-center justify-between border rounded-xl px-2.5 py-2 cursor-pointer"
+                                                onClick={() => setSelfDestruct(prev => !prev)}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <motion.div
+                                                        animate={selfDestruct ? { scale: [1, 1.3, 1], rotate: [-5, 5, -5, 0] } : { scale: 1, rotate: 0 }}
+                                                        transition={{ duration: 0.5 }}
+                                                        className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 transition-colors duration-300 ${selfDestruct ? 'bg-red-100' : 'bg-gray-100'}`}
+                                                    >
+                                                        🔥
+                                                    </motion.div>
+                                                    <div className="flex flex-col">
+                                                        <span className={`text-[11px] font-bold transition-colors duration-300 ${selfDestruct ? 'text-red-600' : 'text-gray-700'}`}>
+                                                            Self destruct
+                                                        </span>
+                                                        <span className="text-[9px] text-gray-400 font-medium">Delete after first download</span>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                                {/* Toggle Switch */}
+                                                <div className={`relative w-9 h-5 rounded-full transition-colors duration-300 shrink-0 ${selfDestruct ? 'bg-gradient-to-r from-red-400 to-orange-400 shadow-[0_0_8px_rgba(239,68,68,0.4)]' : 'bg-gray-200'}`}>
+                                                    <motion.div
+                                                        animate={{ x: selfDestruct ? 16 : 2 }}
+                                                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                                        className="absolute top-[2px] w-4 h-4 bg-white rounded-full shadow-md"
+                                                    />
+                                                </div>
+                                            </motion.div>
 
-                                            {/* Expires In */}
-                                            <div className="flex items-center justify-between bg-gray-50/80 border border-gray-200 rounded-xl px-2.5 py-1.5">
-                                                <span className="text-[10px] font-bold text-gray-600 flex items-center gap-1">
-                                                    Expires in
-                                                    <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-gray-300 text-gray-400 text-[9px] font-bold cursor-help">?</span>
-                                                </span>
-                                                <select
-                                                    value={expiresIn}
-                                                    onChange={(e) => setExpiresIn(e.target.value)}
-                                                    className="bg-transparent outline-none text-[11px] font-bold text-[#2b3a8c] cursor-pointer border-none appearance-none pr-1"
-                                                >
-                                                    <option value="1">1 day</option>
-                                                    <option value="2">2 days</option>
-                                                    <option value="7">7 days</option>
-                                                    <option value="14">14 days</option>
-                                                    <option value="30">30 days</option>
-                                                    <option value="never">Never</option>
-                                                </select>
+                                            {/* Expires In — link */}
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">⏰ Expires in</p>
+                                                <div className="relative flex items-center bg-gray-100 rounded-xl p-[3px] gap-[2px]">
+                                                    {[{ v: '1', l: '1d' }, { v: '3', l: '3d' }, { v: '7', l: '7d' }, { v: 'never', l: '∞' }].map(({ v, l }) => (
+                                                        <button
+                                                            key={v}
+                                                            onClick={() => setExpiresIn(v)}
+                                                            className="relative flex-1 text-center text-[10px] font-bold py-1 rounded-lg z-10 transition-colors duration-200 cursor-pointer"
+                                                            style={{ color: expiresIn === v ? '#fff' : '#9ca3af' }}
+                                                        >
+                                                            {expiresIn === v && (
+                                                                <motion.span
+                                                                    layoutId="expiry-pill-link"
+                                                                    className="absolute inset-0 rounded-lg bg-[#2b3a8c] shadow-[0_2px_8px_rgba(43,58,140,0.4)]"
+                                                                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                                                                />
+                                                            )}
+                                                            <span className="relative z-10">{l}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
 
                                             {/* Password */}

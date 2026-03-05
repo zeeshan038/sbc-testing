@@ -40,9 +40,21 @@ const UploadsTab = () => {
         <div className="w-full flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">My Uploads</h1>
-                    <p className="text-[14px] text-gray-500 mt-1">Manage files you have sent safely and securely.</p>
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-6">
+                        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">My Uploads</h1>
+                        <div className="inline-flex items-center gap-5 bg-white border-2 border-gray-100 rounded-full px-6 py-3 shadow-md shrink-0">
+                            <div className="flex items-center gap-2.5 text-[15px] md:text-[16px]">
+                                <HardDrive className="w-5 h-5 text-[#2b3a8c]" />
+                                <span className="font-extrabold text-[#2b3a8c] tracking-tight">0 Bytes</span>
+                                <span className="text-gray-400 font-bold">/ 30.0 GB</span>
+                            </div>
+                            <div className="w-32 md:w-40 h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner border border-gray-200/50">
+                                <div className="bg-gradient-to-r from-[#2b3a8c] to-blue-400 h-full rounded-full w-[2%] shadow-[0_0_12px_rgba(43,58,140,0.6)]" />
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-[15px] text-gray-500 font-medium tracking-wide">Manage files you have sent safely and securely.</p>
                 </div>
 
                 <div className="relative w-full md:w-[360px] group">
@@ -54,24 +66,6 @@ const UploadsTab = () => {
                         placeholder="Search transfers or emails..."
                         className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-[14px] text-gray-800 outline-none focus:border-[#2b3a8c] focus:ring-4 focus:ring-[#2b3a8c]/10 transition-all shadow-sm placeholder:text-gray-400 font-medium"
                     />
-                </div>
-            </div>
-
-            {/* Storage Usage Banner */}
-            <div className="w-full bg-gradient-to-r from-[#293a93] to-[#1e2a6a] rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-[#293a93]/10 relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                <div className="absolute left-1/4 top-1/2 w-40 h-40 bg-blue-400 opacity-10 rounded-full blur-2xl -mt-20 pointer-events-none"></div>
-
-                <div className="relative z-10 flex flex-col gap-2 w-full md:w-auto">
-                    <h3 className="text-white font-bold text-lg">Storage Usage</h3>
-                    <div className="flex items-center gap-2">
-                        <span className="text-3xl font-black text-white">0 Bytes</span>
-                        <span className="text-white/60 font-medium text-[15px]">/ 30.0 GB</span>
-                    </div>
-                </div>
-
-                <div className="relative z-10 w-full md:w-1/2 bg-white/10 rounded-full h-3 overflow-hidden backdrop-blur-sm shadow-inner">
-                    <div className="bg-white h-full rounded-full w-[2%]" />
                 </div>
             </div>
 

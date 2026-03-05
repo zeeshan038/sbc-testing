@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Video, Play, Pause, X, Clock, ArrowLeft, Volume2, VolumeX, Maximize, Minimize, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Search, Trash2, HardDrive, Calendar, Video, Play, Pause, X, Clock, ArrowLeft, Volume2, VolumeX, Maximize, Minimize, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const mockVideos = [
@@ -301,55 +301,109 @@ const VideosTab = () => {
     const [selectedVideo, setSelectedVideo] = useState(null);
 
     return (
-        <div className="w-full h-full relative z-10 flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-                <h2 className="text-[18px] font-black text-slate-800 dark:text-white">My Videos</h2>
-                <span className="text-[13px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
-                    {mockVideos.length} files
-                </span>
+        <div className="w-full flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">My Videos</h1>
+                    <p className="text-[14px] text-gray-500 mt-1">Manage and preview your recorded videos securely.</p>
+                </div>
+
+                <div className="relative w-full md:w-[360px] group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Search className="h-[18px] w-[18px] text-gray-400 group-focus-within:text-[#2b3a8c] transition-colors" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search videos..."
+                        className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-[14px] text-gray-800 outline-none focus:border-[#2b3a8c] focus:ring-4 focus:ring-[#2b3a8c]/10 transition-all shadow-sm placeholder:text-gray-400 font-medium"
+                    />
+                </div>
             </div>
 
-            {/* Video Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {mockVideos.map((video) => (
-                    <motion.div
-                        key={video.id}
-                        whileHover={{ y: -4 }}
-                        className="group bg-white dark:bg-[#1E1E2E] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] transition-all cursor-pointer flex flex-col"
-                        onClick={() => setSelectedVideo(video)}
+
+            {/* Cards Container */}
+            <div className="grid grid-cols-1 gap-4">
+                {mockVideos.map((video, idx) => (
+                    <div
+                        key={idx}
+                        className="group bg-white border border-gray-100/80 rounded-3xl p-5 md:p-6 shadow-sm hover:shadow-xl hover:shadow-[#2b3a8c]/5 transition-all duration-300 relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
                     >
-                        {/* Thumbnail Area */}
-                        <div className="relative aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                            <img
-                                src={video.thumbnail}
-                                alt={video.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/40 scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300">
-                                    <Play className="w-5 h-5 text-white ml-1 fill-white" />
-                                </div>
+                        {/* Subtle decorative gradient background on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#2b3a8c]/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                        <div className="flex items-start gap-5 w-full md:w-auto z-10">
+                            {/* Icon Wrapper */}
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-[#2b3a8c]/10 flex items-center justify-center flex-shrink-0 shadow-inner">
+                                <Video className="w-6 h-6 text-[#2b3a8c]" strokeWidth={2} />
                             </div>
-                            <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-md">
-                                {video.duration}
+
+                            {/* Main Info */}
+                            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                                <div className="flex items-center gap-3">
+                                    <h3 className="text-[16px] font-bold text-gray-900 truncate">{video.title}</h3>
+                                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 hidden md:inline-block">Active</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500">
+                                    <span className="text-gray-700 bg-gray-100/50 block truncate max-w-[150px] px-2 py-0.5 rounded-md">
+                                        MP4 File
+                                    </span>
+                                    <span>•</span>
+                                    <span className="flex items-center gap-1"><HardDrive className="w-3.5 h-3.5" /> {video.size}</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Video Info */}
-                        <div className="p-4">
-                            <h3 className="text-[13px] font-bold text-slate-800 dark:text-white truncate mb-1" title={video.title}>
-                                {video.title}
-                            </h3>
-                            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                                <div className="flex items-center gap-1.5">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    {video.date}
+                        {/* Metadata & Actions */}
+                        <div className="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto border-t md:border-t-0 border-gray-100 pt-4 md:pt-0 z-10">
+                            {/* Stats */}
+                            <div className="flex items-center gap-6 text-[13px] font-medium w-full md:w-auto justify-between md:justify-end">
+                                <div className="flex flex-col gap-1 items-start md:items-end">
+                                    <span className="text-gray-400 text-[11px] uppercase tracking-wider font-bold">Duration</span>
+                                    <div className="flex items-center gap-1.5 text-gray-900 font-bold bg-gray-50 px-2 py-0.5 rounded-md">
+                                        <Clock className="w-3.5 h-3.5 text-[#2b3a8c]" />
+                                        <span>{video.duration}</span>
+                                    </div>
                                 </div>
-                                <span>{video.size}</span>
+                                <div className="flex flex-col gap-1 items-start md:items-end">
+                                    <span className="text-gray-400 text-[11px] uppercase tracking-wider font-bold">Generated</span>
+                                    <div className="flex items-center gap-1.5 text-gray-500">
+                                        <Calendar className="w-3.5 h-3.5" />
+                                        <span>{video.date}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Divider */}
+                            <div className="hidden md:block w-px h-10 bg-gray-100"></div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-end gap-2 w-full md:w-auto">
+                                <button onClick={() => setSelectedVideo(video)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 text-[13px] font-semibold rounded-xl transition-all shadow-sm">
+                                    <Play className="w-4 h-4 fill-current" />
+                                    Preview
+                                </button>
+                                <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-[13px] font-semibold rounded-xl transition-all shadow-sm">
+                                    <Settings className="w-4 h-4" />
+                                    Manage
+                                </button>
+                                <button className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors tooltip-trigger" title="Delete Video">
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
-                    </motion.div>
+                    </div>
                 ))}
+            </div>
+
+            {/* Premium Pagination */}
+            <div className="flex items-center justify-between mt-4">
+                <span className="text-[13px] font-medium text-gray-500">Showing <strong className="text-gray-900">1-3</strong> of <strong className="text-gray-900">3</strong> videos</span>
+                <div className="flex items-center gap-2 bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+                    <button className="px-4 py-2 text-[13px] font-semibold text-gray-400 rounded-xl cursor-not-allowed">Prev</button>
+                    <button className="w-9 h-9 flex items-center justify-center text-[13px] font-bold text-white bg-[#2b3a8c] rounded-xl shadow-md shadow-[#2b3a8c]/20">1</button>
+                    <button className="px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-gray-50 text-[#2b3a8c] rounded-xl transition-all">Next</button>
+                </div>
             </div>
 
             {/* Video Player Overlay */}
