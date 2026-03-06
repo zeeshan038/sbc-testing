@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Trash2, HardDrive, Calendar, Video, Play, Pause, X, Clock, ArrowLeft, Volume2, VolumeX, Maximize, Minimize, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Search, Trash2, HardDrive, Calendar, Video, Play, Pause, X, Clock, ArrowLeft, Volume2, VolumeX, Maximize, Minimize, SlidersHorizontal, Settings, ChevronLeft, ChevronRight, Check, ChevronUp, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const mockVideos = [
@@ -33,21 +33,25 @@ const mockVideos = [
     },
 ];
 
-const VideoPlayer = ({ video, onClose }) => {
+const VideoPlayer = ({ videos, initialIndex, onClose }) => {
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    const video = videos[currentIndex];
+
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState('0:00');
     const [duration, setDuration] = useState('0:00');
     const [isMuted, setIsMuted] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
-
     const [showSettings, setShowSettings] = useState(false);
     const [settingsView, setSettingsView] = useState('main'); // 'main', 'speed', 'quality'
     const [playbackRate, setPlaybackRate] = useState(1);
     const [quality, setQuality] = useState('Auto');
+    const [showDetails, setShowDetails] = useState(true);
 
     const videoRef = useRef(null);
     const playerContainerRef = useRef(null);
+    const scrollingRef = useRef(false);
 
     const formatTime = (time) => {
         if (isNaN(time)) return '0:00';
@@ -122,7 +126,7 @@ const VideoPlayer = ({ video, onClose }) => {
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
 
-    // Also auto play on mount
+    // Auto play on mount and when video changes
     useEffect(() => {
         if (videoRef.current) {
             videoRef.current.play().then(() => {
@@ -131,82 +135,113 @@ const VideoPlayer = ({ video, onClose }) => {
                 setIsPlaying(false);
             });
         }
-    }, []);
+    }, [currentIndex]);
+
+    const handleWheel = (e) => {
+        if (scrollingRef.current) return;
+        if (e.deltaY > 40) { // scroll down -> next
+            if (currentIndex < videos.length - 1) {
+                scrollingRef.current = true;
+                setCurrentIndex(prev => prev + 1);
+                setTimeout(() => scrollingRef.current = false, 800);
+            }
+        } else if (e.deltaY < -40) { // scroll up -> prev
+            if (currentIndex > 0) {
+                scrollingRef.current = true;
+                setCurrentIndex(prev => prev - 1);
+                setTimeout(() => scrollingRef.current = false, 800);
+            }
+        }
+    };
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[101] flex items-center justify-center bg-black"
+            className="fixed inset-0 z-[101] flex flex-col items-center justify-center bg-gray-900/90 backdrop-blur-xl gap-6"
+            onWheel={handleWheel}
         >
+            {/* Random animated background effect */}
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-pink-500/30 opacity-70 pointer-events-none blur-3xl animate-pulse" />
+
             <div
                 ref={playerContainerRef}
-                className="bg-black w-full h-full overflow-hidden shadow-2xl relative group flex items-center justify-center"
+                className="bg-black w-full max-w-6xl aspect-video max-h-[75vh] relative group flex items-center justify-center rounded-2xl overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.6)] ring-1 ring-white/10 mx-6 object-contain shrink-0"
                 onClick={() => { }}
             >
-                {/* Header */}
-                <div className="absolute top-0 left-0 w-full p-6 flex justify-start items-center bg-gradient-to-b from-black/80 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onClose(); }}
-                        className="w-10 h-10 rounded-md bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors mr-4 pointer-events-auto"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <h3 className="text-[18px] font-bold text-white tracking-wide">{video.title}</h3>
-                </div>
+                {/* Close btn */}
+                <button
+                    onClick={(e) => { e.stopPropagation(); onClose(); }}
+                    className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/60 transition-colors pointer-events-auto shadow-lg"
+                >
+                    <X className="w-5 h-5" />
+                </button>
 
-                {/* Video */}
-                <video
-                    ref={videoRef}
-                    className="w-full h-full object-contain cursor-none group-hover:cursor-auto"
-                    src={video.src}
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onEnded={() => setIsPlaying(false)}
-                    onClick={(e) => togglePlay(e)}
-                />
+                {/* Video container with AnimatePresence for smooth transitions */}
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentIndex}
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -50 }}
+                        transition={{ duration: 0.3 }}
+                        className="w-full h-full absolute inset-0"
+                    >
+                        <video
+                            ref={videoRef}
+                            className="w-full h-full object-cover cursor-pointer"
+                            src={video.src}
+                            onTimeUpdate={handleTimeUpdate}
+                            onLoadedMetadata={handleLoadedMetadata}
+                            onClick={(e) => togglePlay(e)}
+                            loop
+                        />
+                    </motion.div>
+                </AnimatePresence>
 
                 {/* Big Play Button (when paused) */}
                 {!isPlaying && (
                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                         <div
-                            className="w-20 h-20 rounded-full bg-white/60 backdrop-blur-md flex items-center justify-center pointer-events-auto cursor-pointer transition-transform transform hover:scale-105"
+                            className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center pointer-events-auto cursor-pointer transition-transform transform hover:scale-105 shadow-xl border border-white/20"
                             onClick={togglePlay}
                         >
-                            <Play className="w-8 h-8 text-blue-500 fill-blue-500 ml-1.5" />
+                            <Play className="w-8 h-8 text-white fill-white ml-1.5" />
                         </div>
                     </div>
                 )}
 
+
+
                 {/* Bottom Controls */}
                 <div
-                    className="absolute bottom-0 left-0 w-full p-6 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="absolute bottom-0 left-0 w-full p-4 flex flex-col justify-end bg-gradient-to-t from-black/90 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="flex items-center gap-4 w-full px-2">
-                        <button onClick={togglePlay} className="text-white hover:text-blue-500 transition-colors focus:outline-none">
+                    <div className="flex items-center gap-3 w-full px-2">
+                        <button onClick={togglePlay} className="text-white hover:text-blue-400 transition-colors focus:outline-none">
                             {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
                         </button>
 
-                        <div className="flex-1 h-1 bg-white/40 rounded-full relative cursor-pointer group/bar" onClick={handleSeek}>
-                            <div className="absolute left-0 h-1 bg-blue-500 rounded-full" style={{ width: `${progress}%` }}>
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)] opacity-0 group-hover/bar:opacity-100 transition-opacity translate-x-1/2 pointer-events-none"></div>
+                        <div className="flex-1 h-1.5 bg-white/20 rounded-full relative cursor-pointer group/bar overflow-hidden" onClick={handleSeek}>
+                            <div className="absolute left-0 h-1.5 bg-blue-500 rounded-full transition-all duration-75" style={{ width: `${progress}%` }}>
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] opacity-0 group-hover/bar:opacity-100 transition-opacity translate-x-1/2 pointer-events-none"></div>
                             </div>
                         </div>
 
-                        <div className="text-white/90 text-[11px] font-medium font-mono min-w-[70px] text-center shrink-0">
+                        <div className="text-white/80 text-[10px] font-medium font-mono min-w-[65px] text-center shrink-0 tracking-wider">
                             {currentTime}/{duration}
                         </div>
 
-                        <div className="flex items-center gap-4 text-white/90 ml-2 shrink-0">
-                            <button onClick={toggleMute} className="hover:text-blue-500 transition-colors focus:outline-none">
+                        <div className="flex items-center gap-4 ml-4 shrink-0">
+                            <button onClick={toggleMute} className="text-white hover:text-blue-400 transition-colors focus:outline-none">
                                 {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                             </button>
                             <div className="relative flex items-center">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); setSettingsView('main'); }}
-                                    className={`hover:text-blue-500 transition-colors focus:outline-none ${showSettings ? 'text-blue-500' : ''}`}
+                                    className={`text-white hover:text-blue-400 transition-colors focus:outline-none ${showSettings ? 'text-blue-400' : ''}`}
                                 >
                                     <Settings className="w-4 h-4" />
                                 </button>
@@ -218,7 +253,7 @@ const VideoPlayer = ({ video, onClose }) => {
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                                             transition={{ duration: 0.15 }}
-                                            className="absolute bottom-full right-0 mb-4 bg-black/95 backdrop-blur-xl rounded-xl border border-white/10 w-[260px] overflow-hidden z-[110] text-white shadow-2xl origin-bottom-right shadow-black/50"
+                                            className="absolute bottom-full right-0 mb-4 bg-black/95 backdrop-blur-xl rounded-xl border border-white/10 w-[260px] overflow-hidden z-[110] text-white shadow-2xl origin-bottom-right"
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             {settingsView === 'main' && (
@@ -242,7 +277,7 @@ const VideoPlayer = ({ video, onClose }) => {
                                                 </div>
                                             )}
                                             {settingsView === 'speed' && (
-                                                <div className="py-2 flex flex-col max-h-[300px] overflow-y-auto relative custom-scrollbar">
+                                                <div className="py-2 flex flex-col max-h-[300px] overflow-y-auto custom-scrollbar">
                                                     <div className="px-3 pb-2 mb-2 border-b border-white/10 sticky top-0 bg-black/95 z-10 backdrop-blur-md">
                                                         <button className="flex items-center gap-2 text-[13px] hover:text-white/70 transition-colors py-1 px-2 font-medium" onClick={() => setSettingsView('main')}>
                                                             <ChevronLeft className="w-4 h-4 -ml-1" /> Playback speed
@@ -263,7 +298,7 @@ const VideoPlayer = ({ video, onClose }) => {
                                                 </div>
                                             )}
                                             {settingsView === 'quality' && (
-                                                <div className="py-2 flex flex-col max-h-[300px] overflow-y-auto relative custom-scrollbar">
+                                                <div className="py-2 flex flex-col max-h-[300px] overflow-y-auto custom-scrollbar">
                                                     <div className="px-3 pb-2 mb-2 border-b border-white/10 sticky top-0 bg-black/95 z-10 backdrop-blur-md">
                                                         <button className="flex items-center gap-2 text-[13px] hover:text-white/70 transition-colors py-1 px-2 font-medium" onClick={() => setSettingsView('main')}>
                                                             <ChevronLeft className="w-4 h-4 -ml-1" /> Quality
@@ -286,11 +321,54 @@ const VideoPlayer = ({ video, onClose }) => {
                                     )}
                                 </AnimatePresence>
                             </div>
-                            <button onClick={toggleFullscreen} className="hover:text-blue-500 transition-colors focus:outline-none">
+                            <button onClick={toggleFullscreen} className="text-white hover:text-blue-400 transition-colors focus:outline-none">
                                 {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
                             </button>
                         </div>
                     </div>
+                </div>
+
+                {/* Progress Indicators for Reels */}
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
+                    {videos.map((_, i) => (
+                        <div key={i} className={`w-1.5 rounded-full transition-all duration-500 shadow-sm ${i === currentIndex ? 'h-8 bg-white/90' : 'h-1.5 bg-white/30'}`} />
+                    ))}
+                </div>
+            </div>
+
+            {/* Details Section (Name & Description) OUTSIDE VIDEO */}
+            <div className="w-full max-w-6xl mx-6 px-2 flex flex-col z-20">
+                <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-5 relative border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setShowDetails(!showDetails); }}
+                        className="absolute -top-4 right-6 bg-white/20 hover:bg-white/30 backdrop-blur-md p-1.5 rounded-full text-white transition-colors shadow-lg border border-white/20"
+                    >
+                        {showDetails ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                    </button>
+
+                    <AnimatePresence>
+                        {showDetails ? (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <h3 className="text-[18px] font-bold text-white tracking-wide mb-2 leading-tight">{video.title}</h3>
+                                <p className="text-[14px] text-white/70 leading-relaxed max-w-4xl">
+                                    This is an amazing video recording. Scroll up or down with your mouse wheel or trackpad to see the next/previous videos in your library just like reels!
+                                </p>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="pt-1"
+                            >
+                                <h3 className="text-[16px] font-bold text-white tracking-wide truncate">{video.title}</h3>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </motion.div>
@@ -298,7 +376,7 @@ const VideoPlayer = ({ video, onClose }) => {
 };
 
 const VideosTab = () => {
-    const [selectedVideo, setSelectedVideo] = useState(null);
+    const [selectedVideoIndex, setSelectedVideoIndex] = useState(null);
 
     return (
         <div className="w-full flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
@@ -379,7 +457,7 @@ const VideosTab = () => {
 
                             {/* Action Buttons */}
                             <div className="flex items-center justify-end gap-2 w-full md:w-auto">
-                                <button onClick={() => setSelectedVideo(video)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 text-[13px] font-semibold rounded-xl transition-all shadow-sm">
+                                <button onClick={() => setSelectedVideoIndex(idx)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 text-[13px] font-semibold rounded-xl transition-all shadow-sm">
                                     <Play className="w-4 h-4 fill-current" />
                                     Preview
                                 </button>
@@ -409,8 +487,8 @@ const VideosTab = () => {
             {/* Video Player Overlay */}
             {createPortal(
                 <AnimatePresence>
-                    {selectedVideo && (
-                        <VideoPlayer video={selectedVideo} onClose={() => setSelectedVideo(null)} />
+                    {selectedVideoIndex !== null && (
+                        <VideoPlayer videos={mockVideos} initialIndex={selectedVideoIndex} onClose={() => setSelectedVideoIndex(null)} />
                     )}
                 </AnimatePresence>,
                 document.body

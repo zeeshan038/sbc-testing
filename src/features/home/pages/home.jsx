@@ -68,10 +68,15 @@ const Home = () => {
     const handleDragLeave = () => setIsDragging(false);
 
     const formatBytes = (bytes) => {
+        if (bytes === 0) return '0 B';
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
     };
+
+    const totalSize = uploadedFiles.reduce((acc, file) => acc + file.size, 0);
+    const MAX_SIZE = 7 * 1024 * 1024 * 1024; // 7GB
 
     const UPLOAD_TYPES = [
         { id: 'files', label: 'Files', icon: File },
@@ -126,6 +131,18 @@ const Home = () => {
                                 </div>
                                 Transfer files
                             </h2>
+                            <AnimatePresence>
+                                {hasFiles && (
+                                    <motion.div
+                                        initial={{ opacity: 0, x: 10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: 10 }}
+                                        className="text-[11px] font-semibold text-gray-400 bg-gray-50/80 px-2 py-0.5 rounded-md border border-gray-100/50"
+                                    >
+                                        <span className="text-[#2b3a8c]">{formatBytes(totalSize)}</span> / 7 GB
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2">
@@ -207,7 +224,7 @@ const Home = () => {
                                         >
                                             <div className="absolute inset-0 bg-blue-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center mb-1.5 shadow-[0_8px_16px_rgba(30,66,159,0.08)] group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ring-1 ring-black/5">
-                                                <Plus className="w-4 h-4 text-blue-600" />
+                                                <Plus className="w-4 h-4 text-blue-600 transition-transform duration-500 ease-in-out group-hover:rotate-[360deg]" />
                                             </div>
                                             <span className="text-[13px] font-bold text-gray-800 mb-0.5 group-hover:text-blue-700 transition-colors">
                                                 {isDragging ? 'Drop to upload' : `Upload ${transferType}`}
@@ -270,8 +287,8 @@ const Home = () => {
                                                 {uploadedFiles.length} {uploadedFiles.length === 1 ? 'item' : 'items'}
                                             </span>
 
-                                            {/* + Add menu — hidden for video uploads */}
-                                            {transferType !== 'video' && <div className="relative" ref={addMenuRef}>
+                                            {/* + Add menu */}
+                                            <div className="relative" ref={addMenuRef}>
                                                 <motion.button
                                                     whileHover={{ scale: 1.06 }}
                                                     whileTap={{ scale: 0.94 }}
@@ -301,23 +318,27 @@ const Home = () => {
                                                                 className="cursor-pointer w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                                                             >
                                                                 <FilePlus className="w-3.5 h-3.5" />
-                                                                Add File
+                                                                {transferType === 'video' ? 'Add Video' : 'Add File'}
                                                             </button>
-                                                            <div className="h-px bg-gray-100 mx-2" />
-                                                            <button
-                                                                onClick={() => {
-                                                                    setAddMenuOpen(false);
-                                                                    folderInputRef.current?.click();
-                                                                }}
-                                                                className="cursor-pointer w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                                                            >
-                                                                <FolderPlus className="w-3.5 h-3.5" />
-                                                                Add Folder
-                                                            </button>
+                                                            {transferType !== 'video' && (
+                                                                <>
+                                                                    <div className="h-px bg-gray-100 mx-2" />
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setAddMenuOpen(false);
+                                                                            folderInputRef.current?.click();
+                                                                        }}
+                                                                        className="cursor-pointer w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[12px] font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                                                    >
+                                                                        <FolderPlus className="w-3.5 h-3.5" />
+                                                                        Add Folder
+                                                                    </button>
+                                                                </>
+                                                            )}
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
-                                            </div>}
+                                            </div>
                                         </div>
                                     </motion.div>
                                 )}
