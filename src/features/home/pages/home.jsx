@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useUpload } from '../../../shared/context/UploadContext';
 import SettingsModal from '../components/SettingsModal';
+import PreviewModal from '../../../shared/components/PreviewModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const TRANSFER_METHODS = [
@@ -42,6 +43,7 @@ const Home = () => {
     } = useUpload();
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [addMenuOpen, setAddMenuOpen] = useState(false);
     const [plusClicked, setPlusClicked] = useState(false);
@@ -349,10 +351,18 @@ const Home = () => {
                                         className="overflow-visible mb-2"
                                     >
                                         <div className="flex items-center justify-between bg-gray-50/80 dark:bg-zinc-800/80 border border-gray-100/60 dark:border-zinc-700/60 rounded-xl px-2.5 py-1.5">
-                                            <span className="text-[12px] font-semibold text-gray-600 dark:text-zinc-300 flex items-center gap-1.5">
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
-                                                {uploadedFiles.length} {uploadedFiles.length === 1 ? 'item' : 'items'}
-                                            </span>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-[12px] font-semibold text-gray-600 dark:text-zinc-300 flex items-center gap-1.5">
+                                                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500" />
+                                                    {uploadedFiles.length} {uploadedFiles.length === 1 ? 'item' : 'items'}
+                                                </span>
+                                                <button
+                                                    onClick={() => setIsPreviewOpen(true)}
+                                                    className="cursor-pointer text-[11px] font-bold text-gray-500 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-2 py-0.5 rounded-lg transition-all border border-transparent hover:border-blue-100 dark:hover:border-blue-800"
+                                                >
+                                                    Preview
+                                                </button>
+                                            </div>
 
                                             {/* + Add menu */}
                                             {transferType === 'video' ? (
@@ -627,6 +637,11 @@ const Home = () => {
 
                     </div>{/* end outer wrapper */}
                 </motion.div>
+                <PreviewModal
+                    isOpen={isPreviewOpen}
+                    onClose={() => setIsPreviewOpen(false)}
+                    files={uploadedFiles}
+                />
             </main>
         </div>
     );

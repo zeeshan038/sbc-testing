@@ -1,7 +1,12 @@
 import React from 'react';
-import { Search, Trash2, Eye, Copy, HardDrive, Calendar, Clock, DownloadCloud, FileText, Share2, MoreVertical } from 'lucide-react';
+import { Search, Trash2, Eye, Copy, HardDrive, Calendar, Clock, DownloadCloud, FileText, Share2, MoreVertical, X } from 'lucide-react';
+import PreviewModal from '../../../shared/components/PreviewModal';
+import { useState } from 'react';
 
 const ReceivedFilesTab = () => {
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
     // Sample modern data
     const receivedFiles = [
         {
@@ -100,7 +105,19 @@ const ReceivedFilesTab = () => {
 
                             {/* Action Buttons */}
                             <div className="flex items-center gap-2 w-full md:w-auto">
-                                <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#2b3a8c] hover:bg-[#1e2a6a] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-[13px] font-semibold rounded-xl transition-all shadow-md shadow-[#2b3a8c]/20 dark:shadow-blue-900/20 hover:shadow-lg hover:-translate-y-0.5">
+                                <button
+                                    onClick={() => {
+                                        // Mock files based on the received file metadata
+                                        const mockFiles = file.fileTypes.map((type, i) => ({
+                                            name: `received-file-${i + 1}.${type}`,
+                                            size: 204800, // 200KB
+                                            type: type === 'pdf' ? 'application/pdf' : type === 'mp4' ? 'video/mp4' : 'image/jpeg'
+                                        }));
+                                        setSelectedFile({ ...file, files: mockFiles });
+                                        setIsPreviewOpen(true);
+                                    }}
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#2b3a8c] hover:bg-[#1e2a6a] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-[13px] font-semibold rounded-xl transition-all shadow-md shadow-[#2b3a8c]/20 dark:shadow-blue-900/20 hover:shadow-lg hover:-translate-y-0.5"
+                                >
                                     <Eye className="w-4 h-4" />
                                     Preview
                                 </button>
@@ -129,6 +146,12 @@ const ReceivedFilesTab = () => {
                     <button className="px-4 py-2 text-[13px] font-semibold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-[#2b3a8c] dark:hover:text-white rounded-xl transition-all">Next</button>
                 </div>
             </div>
+
+            <PreviewModal
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                files={selectedFile?.files || []}
+            />
         </div>
     );
 };
