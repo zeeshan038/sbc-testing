@@ -101,21 +101,8 @@ const Home = () => {
                 className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500 opacity-15 rounded-full blur-[80px] pointer-events-none"
             />
 
-            <main className="relative z-10 flex items-center justify-center h-[calc(100vh-90px)] px-6 md:px-12 lg:px-24 pointer-events-none">
+            <main className="relative z-10 flex items-center justify-center lg:justify-between h-[calc(100vh-90px)] px-6 md:px-12 lg:px-32 pointer-events-none">
 
-                <motion.div
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="absolute right-24 pointer-events-none hidden lg:flex flex-col items-end gap-6 z-0 max-w-xl"
-                >
-                    <h1 className="text-6xl font-black tracking-tight text-[#1e2a6a] text-right leading-[1.1]">
-                        Send large files with <br /> absolute <span className="relative inline-block"><span className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-400 blur-lg opacity-30"></span><span className="relative text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">simplicity</span></span>.
-                    </h1>
-                    <p className="text-lg font-medium text-gray-600 text-right max-w-sm">
-                        Fast, secure and beautifully designed. Share your heaviest projects without breaking a sweat.
-                    </p>
-                </motion.div>
 
                 <motion.div
                     initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -637,6 +624,21 @@ const Home = () => {
 
                     </div>{/* end outer wrapper */}
                 </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="relative pointer-events-none hidden lg:flex flex-col items-end gap-6 z-0 max-w-xl pr-4"
+                >
+                    <h1 className="text-6xl font-black tracking-tight text-[#1e2a6a] text-right leading-[1.1]">
+                        Send large files with <br /> absolute <span className="relative inline-block"><span className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-400 blur-lg opacity-30"></span><span className="relative text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">simplicity</span></span>.
+                    </h1>
+                    <p className="text-lg font-medium text-gray-600 text-right max-w-md">
+                        Fast, secure and beautifully designed. Share your heaviest projects without breaking a sweat.
+                    </p>
+                </motion.div>
+
                 <PreviewModal
                     isOpen={isPreviewOpen}
                     onClose={() => setIsPreviewOpen(false)}
