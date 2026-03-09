@@ -45,16 +45,16 @@ const UploadsTab = () => {
         <div className="w-full flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 w-full">
                     <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-6">
-                        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">My Uploads</h1>
-                        <div className="inline-flex items-center gap-5 bg-white dark:bg-zinc-900 border-2 border-gray-100 dark:border-zinc-800 rounded-full px-6 py-3 shadow-md shrink-0">
-                            <div className="flex items-center gap-2.5 text-[15px] md:text-[16px]">
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">My Uploads</h1>
+                        <div className="inline-flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white dark:bg-zinc-900 border-2 border-gray-100 dark:border-zinc-800 rounded-3xl sm:rounded-full px-5 py-3 sm:px-6 shadow-md shrink-0">
+                            <div className="flex items-center gap-2.5 text-[14px] md:text-[16px]">
                                 <HardDrive className="w-5 h-5 text-[#2b3a8c] dark:text-blue-400" />
                                 <span className="font-extrabold text-[#2b3a8c] dark:text-white tracking-tight">0 Bytes</span>
                                 <span className="text-gray-400 dark:text-zinc-500 font-bold">/ 30.0 GB</span>
                             </div>
-                            <div className="w-32 md:w-40 h-3 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-zinc-700/50">
+                            <div className="w-full sm:w-32 md:w-40 h-2 sm:h-3 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-zinc-700/50">
                                 <div className="bg-gradient-to-r from-[#2b3a8c] to-blue-400 dark:from-blue-600 dark:to-blue-400 h-full rounded-full w-[2%] shadow-[0_0_12px_rgba(43,58,140,0.6)] dark:shadow-[0_0_12px_rgba(96,165,250,0.6)]" />
                             </div>
                         </div>
@@ -91,21 +91,24 @@ const UploadsTab = () => {
                             </div>
 
                             {/* Main Info */}
-                            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                            <div className="flex flex-col gap-2 flex-1 min-w-0">
                                 <div className="flex items-center gap-3">
-                                    <h3 className="text-[16px] font-bold text-gray-900 dark:text-white truncate">{upload.message}</h3>
+                                    <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white truncate tracking-tight">{upload.message}</h3>
                                     {upload.status === 'Destroyed' ? (
-                                        <span className="text-[10px] uppercase font-bold tracking-wider text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded-md border border-red-100 dark:border-red-500/20 hidden md:inline-block">Destroyed</span>
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-0.5 rounded-md border border-red-100 dark:border-red-500/20 hidden sm:inline-block">Destroyed</span>
                                     ) : (
-                                        <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-500/20 hidden md:inline-block">Active</span>
+                                        <span className="text-[10px] uppercase font-black tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-100 dark:border-emerald-500/20 hidden sm:inline-block">Active</span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 dark:text-zinc-400">
-                                    <span className={`px-2 py-0.5 rounded-md ${upload.emailTo !== 'Not specified' ? 'text-gray-700 dark:text-zinc-300 bg-gray-100/50 dark:bg-zinc-800/50 block truncate max-w-[150px]' : 'text-gray-400 dark:text-zinc-500 italic'}`}>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] font-bold text-gray-500 dark:text-zinc-400">
+                                    <div className={`px-2.5 py-1 rounded-lg ${upload.emailTo !== 'Not specified' ? 'text-indigo-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 max-w-[220px] truncate' : 'text-gray-400 dark:text-zinc-500 italic bg-gray-50 dark:bg-zinc-800/50'}`}>
                                         {upload.emailTo}
-                                    </span>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1"><HardDrive className="w-3.5 h-3.5" /> {upload.size}</span>
+                                    </div>
+                                    <span className="text-gray-300 dark:text-zinc-700 hidden sm:inline">•</span>
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-zinc-800/50 rounded-lg text-gray-700 dark:text-zinc-300">
+                                        <HardDrive className="w-3.5 h-3.5 text-gray-400" />
+                                        <span>{upload.size}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

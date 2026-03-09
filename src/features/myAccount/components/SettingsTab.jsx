@@ -25,7 +25,7 @@ const Toggle = ({ checked, onChange, color = '#2b3a8c' }) => (
 
 /* ── input field ── */
 const Field = ({ label, icon: Icon, type = 'text', placeholder, defaultValue, readOnly = false, hint, options }) => (
-    <div cla    ssName="flex flex-col gap-2">
+    <div cla ssName="flex flex-col gap-2">
         <label className="text-[13px] font-bold text-gray-700 dark:text-zinc-300 flex items-center gap-1.5 ml-1">
             {label}
         </label>
@@ -136,7 +136,7 @@ const SettingsTab = () => {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6"
             >
                 <StatCard icon={ShieldCheck} label="Status" value="Active" sub="Account verified" color="#10b981" />
                 <StatCard icon={Zap} label="Plan" value="Free" sub="Upgrade available" color="#3b82f6" />
@@ -183,27 +183,27 @@ const SettingsTab = () => {
                     {activeTab === 'Profile' && (
                         <div className="flex flex-col gap-6">
                             {/* Avatar + Name banner */}
-                            <div className="relative bg-gradient-to-r from-[#2b3a8c] to-[#1565c0] dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-6 flex items-center gap-6 overflow-hidden">
+                            <div className="relative bg-gradient-to-r from-[#2b3a8c] to-[#1565c0] dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-6 lg:p-10 flex flex-col sm:flex-row items-center sm:items-start lg:items-center gap-6 overflow-hidden text-center sm:text-left">
                                 {/* background blobs */}
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
                                 <div className="absolute bottom-0 left-1/2 w-48 h-48 bg-indigo-400/10 rounded-full blur-2xl pointer-events-none" />
 
                                 {/* Avatar */}
                                 <div className="relative flex-shrink-0">
-                                    <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center ring-4 ring-white/10">
-                                        <User className="w-9 h-9 text-white/80" />
+                                    <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-[30%] bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center ring-4 ring-white/10">
+                                        <User className="w-10 h-10 lg:w-12 lg:h-12 text-white/80" />
                                     </div>
-                                    <button className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                                        <Camera className="w-3.5 h-3.5 text-[#2b3a8c] dark:text-white" />
+                                    <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 transition-transform border border-slate-100 dark:border-white/10">
+                                        <Camera className="w-4 h-4 text-[#2b3a8c] dark:text-blue-400 px-0.5" />
                                     </button>
                                 </div>
 
                                 <div className="relative z-10">
-                                    <h2 className="text-[20px] font-black text-white leading-tight">Muhammad Zeeshan</h2>
-                                    <p className="text-[13px] text-white/60 font-medium mt-0.5">zeeshandev038@gmail.com</p>
-                                    <div className="flex items-center gap-1.5 mt-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                        <span className="text-[12px] text-emerald-300 font-bold">Active Account</span>
+                                    <h2 className="text-[22px] lg:text-[26px] font-black text-white leading-tight">Muhammad Zeeshan</h2>
+                                    <p className="text-[14px] text-white/60 font-medium mt-1">zeeshandev038@gmail.com</p>
+                                    <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-3">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                        <span className="text-[12px] text-emerald-300 font-bold uppercase tracking-wider">Active Account</span>
                                     </div>
                                 </div>
                             </div>
@@ -258,7 +258,7 @@ const SettingsTab = () => {
                                         <h3 className="text-[16px] font-bold text-gray-900 dark:text-white tracking-tight">Appearance</h3>
                                         <p className="text-[13px] text-gray-500 dark:text-zinc-400 mt-1">Customize the interface theme.</p>
                                     </div>
-                                    <div className="flex gap-4">
+                                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
                                         {[
                                             { id: 'light', icon: Sun, label: 'Light' },
                                             { id: 'dark', icon: Moon, label: 'Dark' },

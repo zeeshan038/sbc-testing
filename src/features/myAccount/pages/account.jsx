@@ -44,6 +44,7 @@ const Account = () => {
             <header className="relative w-full z-40 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-3xl border-b border-indigo-50/80 dark:border-white/10 shadow-[0_4px_32px_rgba(0,0,0,0.03)] dark:shadow-none mt-[80px] lg:mt-[90px]">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 
+                    {/* Desktop Navigation */}
                     <nav className="hidden lg:flex items-center gap-1.5 bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 p-1 rounded-2xl shadow-inner dark:shadow-none">
                         {navItems.map((item, idx) => {
                             const isActive = idx === (activeIdx >= 0 ? activeIdx : 0);
@@ -82,6 +83,28 @@ const Account = () => {
                         })}
                     </nav>
 
+                    {/* Mobile Navigation - Horizontal Scrollable Tabs */}
+                    <div className="lg:hidden flex-1 overflow-x-auto no-scrollbar py-2 -mx-2">
+                        <div className="flex items-center gap-2 px-2 min-w-max">
+                            {navItems.map((item, idx) => {
+                                const isActive = idx === (activeIdx >= 0 ? activeIdx : 0);
+                                return (
+                                    <Link
+                                        key={`mobile-${item.path}`}
+                                        to={item.path}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[13px] font-bold transition-all whitespace-nowrap ${isActive
+                                            ? 'bg-white dark:bg-zinc-800 text-indigo-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-white/10'
+                                            : 'text-slate-500 dark:text-gray-400 bg-transparent'
+                                            }`}
+                                    >
+                                        <item.icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 dark:text-blue-400' : 'text-slate-400 dark:text-gray-400'}`} />
+                                        {item.label}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="relative">
 
 
@@ -117,12 +140,12 @@ const Account = () => {
                 </div>
             </header>
 
-            <div className="pt-6 px-4 pb-12 min-h-screen">
-                <div className="max-w-7xl mx-auto flex gap-8">
+            <div className="pt-6 px-3 lg:px-6 pb-12 min-h-screen">
+                <div className="max-w-7xl mx-auto flex gap-4 lg:gap-8">
 
                     {/* The Page Container */}
-                    <div className="flex-1 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-[0_8px_40px_rgba(0,0,0,0.03)] dark:shadow-none rounded-[32px] overflow-hidden min-h-[600px] transition-colors duration-300">
-                        <div className="p-6 lg:p-10 h-full text-slate-900 dark:text-white">
+                    <div className="flex-1 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-[0_8px_40px_rgba(0,0,0,0.03)] dark:shadow-none rounded-[24px] lg:rounded-[32px] overflow-hidden min-h-[600px] transition-colors duration-300">
+                        <div className="p-4 sm:p-6 lg:p-10 h-full text-slate-900 dark:text-white">
                             <Outlet />
                         </div>
                     </div>

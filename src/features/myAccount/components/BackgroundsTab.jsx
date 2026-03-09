@@ -27,23 +27,23 @@ const BackgroundsTab = () => {
         <div className="w-full flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
 
             {/* Ultra-Premium Header & Trial Banner */}
-            <div className="relative w-full overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1e2a6a] via-[#2b3a8c] to-[#4a55a2] dark:from-blue-900/80 dark:via-blue-800/80 dark:to-indigo-900/80 p-8 md:p-10 shadow-xl shadow-[#2b3a8c]/20 dark:shadow-none border border-transparent dark:border-white/10">
+            <div className="relative w-full overflow-hidden rounded-[24px] bg-gradient-to-br from-[#1e2a6a] via-[#2b3a8c] to-[#4a55a2] dark:from-blue-900/80 dark:via-blue-800/80 dark:to-indigo-900/80 p-6 sm:p-8 md:p-12 shadow-xl shadow-[#2b3a8c]/20 dark:shadow-none border border-transparent dark:border-white/10">
                 {/* Abstract shapes for premium feel */}
                 <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-400 opacity-10 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="relative z-10 flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="px-3 py-1 bg-white/20 text-white text-[12px] font-bold uppercase tracking-wider rounded-full backdrop-blur-md border border-white/10 flex items-center gap-1.5">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-3 py-1 bg-white/20 text-white text-[11px] font-bold uppercase tracking-wider rounded-full backdrop-blur-md border border-white/10 flex items-center gap-1.5 whitespace-nowrap">
                                 <Crown className="w-3.5 h-3.5 text-yellow-300" /> Premium Trial
                             </span>
-                            <span className="text-white/80 text-[13px] font-medium flex items-center gap-1.5">
+                            <span className="text-white/80 text-[12px] font-medium flex items-center gap-1.5 whitespace-nowrap">
                                 <Clock className="w-3.5 h-3.5" /> 24 Days Left
                             </span>
                         </div>
-                        <h1 className="text-3xl font-black text-white tracking-tight">Custom Backgrounds</h1>
-                        <p className="text-white/70 text-[15px] font-medium max-w-xl">
+                        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">Custom Backgrounds</h1>
+                        <p className="text-white/70 text-[14px] sm:text-[15px] font-medium max-w-2xl leading-relaxed">
                             Transform your transfer pages into immersive brand experiences. Create a lasting impression with stunning full-screen images and high-definition video loops.
                         </p>
                     </div>
@@ -51,7 +51,7 @@ const BackgroundsTab = () => {
                     {!isAdding && (
                         <button
                             onClick={() => setIsAdding(true)}
-                            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-800 text-[#2b3a8c] dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-700 text-[15px] font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 whitespace-nowrap group"
+                            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-800 text-[#2b3a8c] dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-700 text-[14px] font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 whitespace-nowrap group self-start"
                         >
                             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
                             Create New Background
@@ -62,7 +62,7 @@ const BackgroundsTab = () => {
 
             {/* Smart Add Background Form Layout */}
             {isAdding && (
-                <div className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-[24px] p-8 shadow-sm flex flex-col gap-8 animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
+                <div className="w-full bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-[24px] p-6 sm:p-8 shadow-sm flex flex-col gap-6 sm:gap-8 animate-in fade-in slide-in-from-top-4 duration-500 relative overflow-hidden">
                     <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 pb-6">
                         <h2 className="text-[20px] font-bold text-gray-900 dark:text-white flex items-center gap-3">
                             <span className="flex items-center justify-center w-10 h-10 bg-blue-50 dark:bg-blue-900/20 text-[#2b3a8c] dark:text-blue-400 rounded-xl">
@@ -187,19 +187,19 @@ const BackgroundsTab = () => {
                                     </div>
 
                                     {/* Data Area */}
-                                    <div className="flex flex-col gap-2 flex-1 w-full min-w-0">
+                                    <div className="flex flex-col gap-3 flex-1 w-full min-w-0">
                                         <h3 className="text-[18px] font-bold text-gray-900 dark:text-white truncate pr-4">{bg.fileName}</h3>
 
-                                        <div className="flex flex-wrap items-center gap-4 text-[13px]">
-                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-300 font-medium rounded-lg border border-transparent dark:border-zinc-700/50">
+                                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-[13px]">
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-300 font-medium rounded-lg border border-transparent dark:border-zinc-700/50">
                                                 <LinkIcon className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-400" />
-                                                <span className="truncate max-w-[200px]">{bg.url !== '-' ? bg.url : 'No Link Provided'}</span>
+                                                <span className="truncate max-w-[120px] sm:max-w-[200px]">{bg.url !== '-' ? bg.url : 'No Link'}</span>
                                             </div>
-                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-300 font-medium rounded-lg border border-transparent dark:border-zinc-700/50">
+                                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-zinc-300 font-medium rounded-lg border border-transparent dark:border-zinc-700/50">
                                                 <Clock className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-400" />
                                                 <span>{bg.duration}</span>
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-gray-400 dark:text-zinc-500 font-medium">
+                                            <div className="flex items-center gap-1.5 text-gray-400 dark:text-zinc-500 font-medium ml-1">
                                                 <span>{bg.size}</span>
                                             </div>
                                         </div>
@@ -207,12 +207,12 @@ const BackgroundsTab = () => {
 
                                     {/* Large Action Buttons */}
                                     <div className="flex items-center gap-3 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 border-gray-100 dark:border-zinc-800 mt-2 md:mt-0">
-                                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-[#2b3a8c]/5 dark:bg-blue-900/20 hover:bg-[#2b3a8c] dark:hover:bg-blue-600 text-[#2b3a8c] dark:text-blue-400 hover:text-white dark:hover:text-white text-[14px] font-bold rounded-xl transition-all">
+                                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-[#2b3a8c]/5 dark:bg-blue-900/20 hover:bg-[#2b3a8c] dark:hover:bg-blue-600 text-[#2b3a8c] dark:text-blue-400 hover:text-white dark:hover:text-white text-[14px] font-bold rounded-xl transition-all">
                                             Preview
                                         </button>
                                         <button
                                             onClick={() => setBackgrounds(backgrounds.filter(b => b.id !== bg.id))}
-                                            className="p-3 text-gray-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 border border-transparent hover:border-red-100 dark:hover:border-red-500/20 rounded-xl transition-all tooltip-trigger"
+                                            className="p-3 text-gray-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 border border-transparent hover:border-red-100 dark:hover:border-red-500/20 rounded-xl transition-all"
                                         >
                                             <Trash2 className="w-5 h-5" />
                                         </button>

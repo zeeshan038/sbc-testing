@@ -101,7 +101,7 @@ const Home = () => {
                 className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500 opacity-15 rounded-full blur-[80px] pointer-events-none"
             />
 
-            <main className="relative z-10 flex items-center h-[calc(100vh-140px)] px-6 md:px-12 lg:px-24 pointer-events-none pb-20 md:pb-0">
+            <main className="relative z-10 flex items-center justify-center h-[calc(100vh-90px)] px-6 md:px-12 lg:px-24 pointer-events-none">
 
                 <motion.div
                     initial={{ opacity: 0, x: 50 }}

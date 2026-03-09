@@ -69,12 +69,17 @@ const ReceivedFilesTab = () => {
                             </div>
 
                             {/* Main Info */}
-                            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                                <h3 className="text-[16px] font-bold text-gray-900 dark:text-white truncate pr-4">{file.message}</h3>
-                                <div className="flex items-center gap-2 text-[13px] font-medium text-gray-500 dark:text-zinc-400">
-                                    <span className="text-[#2b3a8c] dark:text-blue-300 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md">{file.emailFrom}</span>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1"><HardDrive className="w-3.5 h-3.5" /> {file.size}</span>
+                            <div className="flex flex-col gap-2 flex-1 min-w-0">
+                                <h3 className="text-base sm:text-lg font-black text-gray-900 dark:text-white truncate tracking-tight">{file.message}</h3>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] font-bold text-gray-500 dark:text-zinc-400">
+                                    <div className="text-indigo-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-lg max-w-[220px] truncate">
+                                        {file.emailFrom}
+                                    </div>
+                                    <span className="text-gray-300 dark:text-zinc-700 hidden sm:inline">•</span>
+                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 dark:bg-zinc-800/50 rounded-lg text-gray-700 dark:text-zinc-300">
+                                        <HardDrive className="w-3.5 h-3.5 text-gray-400" />
+                                        <span>{file.size}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
