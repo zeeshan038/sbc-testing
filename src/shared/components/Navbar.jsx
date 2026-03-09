@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, LogIn, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import logo from '../../assets/logo3.jpeg';
+import logo from '../../assets/logo5.jpeg';
 
 const navItems = [
     { name: "My Account", path: "/my-account" },
@@ -36,7 +36,7 @@ const Navbar = () => {
         <nav className="absolute top-0 left-0 w-full z-50 flex items-center justify-between px-4 md:px-8 py-5 bg-transparent">
             {/* Left: Logo */}
             <Link to="/" className="flex items-center transition-transform hover:scale-105 active:scale-95 z-50">
-                <img src={logo} alt="Logo" className="h-10 md:h-12 w-auto object-contain rounded-md shadow-sm" title="SendByCloud" />
+                <img src={logo} alt="Logo" className="h-8 md:h-12 w-auto object-contain rounded-md shadow-sm" title="SendByCloud" />
             </Link>
 
             {/* Right Side: Desktop Menu & Mobile Toggle */}

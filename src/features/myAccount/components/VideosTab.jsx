@@ -37,7 +37,7 @@ const mockVideos = [
 /* ─────────────────────────────────────────────────────────
    Individual inline video player used inside the feed
 ───────────────────────────────────────────────────────── */
-const InlinePlayer = ({ video, onClose }) => {
+const InlinePlayer = ({ video }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState('0:00');
@@ -51,6 +51,8 @@ const InlinePlayer = ({ video, onClose }) => {
 
     const videoRef = useRef(null);
     const containerRef = useRef(null);
+
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
     const fmt = (t) => {
         if (isNaN(t)) return '0:00';
@@ -93,20 +95,21 @@ const InlinePlayer = ({ video, onClose }) => {
     }, []);
 
     return (
-        <div style={{ height: '65vh', width: '100%', flexShrink: 0, scrollSnapAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 24px' }}>
+        <div style={{
+            height: isMobile ? '50vh' : '65vh',
+            width: '100%',
+            flexShrink: 0,
+            scrollSnapAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: isMobile ? '0 16px' : '0 24px'
+        }}>
             <div
                 ref={containerRef}
-                className="bg-black w-full max-w-4xl aspect-video relative group flex items-center justify-center rounded-2xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10"
+                className="bg-black w-full max-w-4xl aspect-video relative group flex items-center justify-center rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.7)] border border-white/10"
             >
-                {/* Top-right: Close X */}
-                {onClose && (
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 z-50 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/50 transition-colors pointer-events-auto"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                )}
 
                 <video
                     ref={videoRef}
@@ -238,15 +241,24 @@ const InlinePlayer = ({ video, onClose }) => {
 
 const VideoFeedOverlay = ({ videos, startIndex, onClose }) => {
     const scrollRef = useRef(null);
+    const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const slotRatio = isMobile ? 0.5 : 0.65;
+    const paddingRatio = (1 - slotRatio) / 2;
 
     // Scroll to the starting video on open
     useEffect(() => {
         if (scrollRef.current && startIndex >= 0) {
-            // Each video slot is 65vh.
             const vh = window.innerHeight;
-            scrollRef.current.scrollTop = startIndex * (0.65 * vh);
+            scrollRef.current.scrollTop = startIndex * (slotRatio * vh);
         }
-    }, [startIndex, videos.length]);
+    }, [startIndex, videos.length, isMobile]);
 
     return (
         <motion.div
@@ -268,6 +280,14 @@ const VideoFeedOverlay = ({ videos, startIndex, onClose }) => {
                 <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
             </div>
 
+            {/* Close Button top-right */}
+            <button
+                onClick={onClose}
+                className="fixed top-5 right-6 z-[400] w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 transition-all active:scale-95 shadow-lg border border-white/10"
+            >
+                <X className="w-5 h-5" />
+            </button>
+
             {/* Scrollable feed */}
             <div
                 ref={scrollRef}
@@ -281,15 +301,15 @@ const VideoFeedOverlay = ({ videos, startIndex, onClose }) => {
                     scrollSnapType: 'y mandatory',
                     scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
-                    paddingTop: '17.5vh',    // (100vh - 65vh) / 2
-                    paddingBottom: '17.5vh', // Ensures last video can center
+                    paddingTop: `${paddingRatio * 100}vh`,
+                    paddingBottom: `${paddingRatio * 100}vh`,
                 }}
             >
                 <style>{`
                     .feed-scroll::-webkit-scrollbar { display: none; }
                 `}</style>
-                {videos.map((video, i) => (
-                    <InlinePlayer key={video.id} video={video} onClose={i === 0 ? onClose : undefined} />
+                {videos.map((video) => (
+                    <InlinePlayer key={video.id} video={video} />
                 ))}
             </div>
         </motion.div>
