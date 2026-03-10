@@ -14,21 +14,21 @@ const Login = () => {
     const [showPass, setShowPass] = useState(false);
 
     return (
-        <div className="min-h-screen w-full flex font-sans overflow-hidden" style={{ background: '#f8faff' }}>
+        <div className="min-h-screen w-full flex font-sans dark:bg-zinc-950 bg-[#f8faff] transition-colors duration-300 overflow-y-auto lg:overflow-hidden">
 
             {/* ── LEFT: Form Panel ── */}
-            <div className="w-full lg:w-[48%] flex flex-col justify-center px-8 md:px-14 xl:px-20 min-h-screen py-12">
+            <div className="w-full lg:w-[48%] flex flex-col lg:justify-center px-6 md:px-14 xl:px-20 min-h-screen py-10 lg:py-12">
                 <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }} className="w-full max-w-[400px] mx-auto">
 
                     {/* Heading */}
                     <div className="mb-8">
-                        <h1 className="text-[32px] font-black text-[#0a0e2e] tracking-tight leading-tight mb-2">
+                        <h1 className="text-[28px] md:text-[32px] font-black text-[#0a0e2e] dark:text-white tracking-tight leading-tight mb-2">
                             Sign in to your account
                         </h1>
-                        <p className="text-[14px] text-gray-500">
+                        <p className="text-[14px] text-gray-500 dark:text-zinc-400">
                             Don't have an account?{' '}
-                            <Link to="/register" className="text-[#2b3a8c] font-semibold hover:underline underline-offset-2">Sign up free →</Link>
+                            <Link to="/register" className="text-[#2b3a8c] dark:text-blue-400 font-semibold hover:underline underline-offset-2">Sign up free →</Link>
                         </p>
                     </div>
 
@@ -39,7 +39,7 @@ const Login = () => {
                             { label: 'Microsoft', svg: <svg className="w-4 h-4" viewBox="0 0 24 24"><rect x="1.5" y="1.5" width="9.5" height="9.5" fill="#F25022" /><rect x="1.5" y="12" width="9.5" height="9.5" fill="#00A4EF" /><rect x="12" y="1.5" width="9.5" height="9.5" fill="#7FBA00" /><rect x="12" y="12" width="9.5" height="9.5" fill="#FFB900" /></svg> },
                         ].map(({ label, svg }) => (
                             <motion.button key={label} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                className="flex-1 h-11 bg-white border border-gray-200 hover:border-gray-300 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-[13px] font-semibold text-gray-700">
+                                className="flex-1 h-11 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm text-[13px] font-semibold text-gray-700 dark:text-zinc-300">
                                 {svg}{label}
                             </motion.button>
                         ))}
@@ -47,27 +47,27 @@ const Login = () => {
 
                     {/* Divider */}
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="flex-1 h-px bg-gray-200" />
-                        <span className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold">or with email</span>
-                        <div className="flex-1 h-px bg-gray-200" />
+                        <div className="flex-1 h-px bg-gray-200 dark:bg-zinc-800" />
+                        <span className="text-[11px] text-gray-400 dark:text-zinc-500 uppercase tracking-wider font-semibold">or with email</span>
+                        <div className="flex-1 h-px bg-gray-200 dark:bg-zinc-800" />
                     </div>
 
                     {/* Form */}
                     <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
                         <input id="login-email" type="email" placeholder="Email address"
-                            className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 focus:border-[#2b3a8c] focus:outline-none focus:ring-4 focus:ring-blue-50 text-[14px] text-gray-800 placeholder-gray-400 transition-all" />
+                            className="w-full px-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 focus:border-[#2b3a8c] dark:focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-50/50 dark:focus:ring-blue-500/10 text-[14px] text-gray-800 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-600 transition-all" />
 
                         <div className="relative">
                             <input id="login-password" type={showPass ? 'text' : 'password'} placeholder="Password"
-                                className="w-full px-4 py-3 pr-11 rounded-xl bg-white border border-gray-200 focus:border-[#2b3a8c] focus:outline-none focus:ring-4 focus:ring-blue-50 text-[14px] text-gray-800 placeholder-gray-400 transition-all" />
+                                className="w-full px-4 py-3 pr-11 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 focus:border-[#2b3a8c] dark:focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-50/50 dark:focus:ring-blue-500/10 text-[14px] text-gray-800 dark:text-zinc-100 placeholder-gray-400 dark:placeholder-zinc-600 transition-all" />
                             <button type="button" onClick={() => setShowPass(p => !p)}
-                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 transition-colors">
                                 {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
                         </div>
 
                         <div className="flex justify-end">
-                            <a href="#" className="text-[13px] font-semibold text-[#2b3a8c] hover:underline underline-offset-2">Forgot password?</a>
+                            <a href="#" className="text-[13px] font-semibold text-[#2b3a8c] dark:text-blue-400 hover:underline underline-offset-2">Forgot password?</a>
                         </div>
 
                         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -78,18 +78,18 @@ const Login = () => {
                         </motion.button>
                     </form>
 
-                    <p className="text-center text-[12px] text-gray-400 mt-5">
+                    <p className="text-center text-[12px] text-gray-400 dark:text-zinc-500 mt-5 leading-relaxed">
                         By continuing, you agree to our{' '}
-                        <a href="#" className="text-[#2b3a8c] hover:underline">Terms</a>
+                        <a href="#" className="text-[#2b3a8c] dark:text-blue-400 hover:underline">Terms</a>
                         {' & '}
-                        <a href="#" className="text-[#2b3a8c] hover:underline">Privacy Policy</a>
+                        <a href="#" className="text-[#2b3a8c] dark:text-blue-400 hover:underline">Privacy Policy</a>
                     </p>
 
                 </motion.div>
             </div>
 
             {/* ── RIGHT: Dark Creative Panel ── */}
-            <div className="hidden lg:flex w-[52%] relative overflow-hidden flex-col"
+            <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-col"
                 style={{ background: 'linear-gradient(145deg, #0a0e2e 0%, #1a237e 50%, #0d47a1 100%)' }}>
 
                 <div className="absolute inset-0 opacity-[0.06]"

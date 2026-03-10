@@ -33,7 +33,7 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="absolute top-0 left-0 w-full z-50 px-4 md:px-6 lg:px-8 py-4 md:py-4 lg:py-5 bg-white dark:bg-zinc-950 md:bg-transparent md:dark:bg-transparent border-b border-gray-100 dark:border-zinc-900 md:border-none transition-all duration-300">
+        <nav className="absolute top-0 left-0 w-full z-50 px-4 md:px-6 lg:px-8 py-2 md:py-4 lg:py-5 bg-white dark:bg-zinc-950 md:bg-transparent md:dark:bg-transparent border-b border-gray-100 dark:border-zinc-900 md:border-none transition-all duration-300">
             <div className="flex items-center justify-between w-full relative max-w-[1600px] mx-auto">
                 {/* Mobile: Burger Toggle (Left) */}
                 <button
@@ -50,9 +50,9 @@ const Navbar = () => {
                             transition={{ duration: 0.2 }}
                         >
                             {isMenuOpen ? (
-                                <X className="w-8 h-8 text-black dark:text-white" />
+                                <X className="w-8 h-6 text-black dark:text-white" />
                             ) : (
-                                <Menu className="w-8 h-8 text-black dark:text-white" />
+                                <Menu className="w-8 h-6 text-black dark:text-white" />
                             )}
                         </motion.div>
                     </AnimatePresence>
