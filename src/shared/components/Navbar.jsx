@@ -5,21 +5,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../../assets/logo5.jpeg';
 
 const navItems = [
-    { name: "Send files", path: "/" },
-    { name: "Features", path: "/features", hasDropdown: true },
-    { name: "Pricing", path: "/pricing" },
-    { name: "Use cases", path: "/use-cases", hasDropdown: true },
-    { name: "Resources", path: "/resources", hasDropdown: true },
-    { name: "What's new", path: "/news" },
+    { name: "My Account", path: "/my-account" },
+    { name: "Terms of service", path: "/terms" },
+    { name: "About Us", path: "/about" },
+    { name: "Contact Us", path: "/contact" },
 ];
 
-const Navbar = () => {
+const Navbar = ({ onMenuToggle }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
         setIsMenuOpen(false);
+        if (onMenuToggle) onMenuToggle(false);
     }, [location.pathname]);
+
+    const handleToggle = () => {
+        const newState = !isMenuOpen;
+        setIsMenuOpen(newState);
+        if (onMenuToggle) onMenuToggle(newState);
+    };
 
     const isActive = (path) => {
         if (path === '/' && location.pathname !== '/') return false;
@@ -31,7 +36,7 @@ const Navbar = () => {
             <div className="flex items-center justify-between w-full relative max-w-[1600px] mx-auto">
                 {/* Mobile: Burger Toggle (Left) */}
                 <button
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    onClick={handleToggle}
                     className="flex md:hidden items-center justify-center w-8 h-8 z-[100] transition-transform active:scale-90"
                     aria-label="Toggle menu"
                 >

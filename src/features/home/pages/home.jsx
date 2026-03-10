@@ -30,7 +30,7 @@ const TRANSFER_METHODS = [
     },
 ];
 
-const Home = () => {
+const Home = ({ isNavOpen }) => {
     const {
         transferType, setTransferType,
         uploadedFiles, setUploadedFiles,
@@ -146,12 +146,12 @@ const Home = () => {
                 className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500 opacity-15 rounded-full blur-[80px] pointer-events-none"
             />
 
-            <main className="fixed inset-0 z-10 flex items-start justify-center sm:justify-start lg:justify-between px-4 sm:px-6 md:px-12 lg:px-32 pt-16 sm:pt-24 lg:pt-32 pointer-events-none">
+            <main className="fixed inset-0 z-10 flex items-start justify-center sm:justify-start lg:justify-between px-4 sm:px-6 md:px-12 lg:px-32 pt-24 sm:pt-28 md:pt-32 pointer-events-none">
 
 
                 <motion.div
                     initial={isMobile ? false : { opacity: 0, y: 100 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    animate={{ opacity: 1, y: isNavOpen ? 350 : 0 }}
                     transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
                     className={`w-full max-w-[400px] lg:w-[320px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white dark:border-zinc-800 shadow-[0_-10px_40px_rgba(43,58,140,0.1)] sm:shadow-[0_40px_100px_rgba(43,58,140,0.15)] dark:shadow-[0_40px_100px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto relative z-20 transition-all duration-500 ring-1 ring-black/5 dark:ring-white/5 max-h-[90vh] sm:max-h-[500px] overflow-hidden rounded-[24px] ${isSettingsOpen ? 'sm:rounded-l-[24px] sm:rounded-r-none' : 'sm:rounded-[24px]'}`}
                 >
