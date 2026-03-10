@@ -133,7 +133,7 @@ const Home = () => {
     }, []);
 
     return (
-        <div className="fixed inset-0 w-screen h-screen font-sans text-gray-900 overflow-hidden bg-gradient-to-br from-[#f0f4f9] to-[#d6e4f9] touch-none overscroll-none">
+        <div className="fixed inset-0 w-screen h-[100svh] font-sans text-gray-900 overflow-hidden bg-gradient-to-br from-[#f0f4f9] to-[#d6e4f9] touch-none overscroll-none">
 
             <motion.div
                 animate={{ rotate: [0, 90, 180, 270, 360], scale: [1, 1.1, 1] }}
@@ -146,7 +146,7 @@ const Home = () => {
                 className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500 opacity-15 rounded-full blur-[80px] pointer-events-none"
             />
 
-            <main className="fixed inset-0 z-10 flex items-center justify-center lg:justify-between px-4 sm:px-6 md:px-12 lg:px-32 pointer-events-none">
+            <main className="fixed inset-0 z-10 flex items-center justify-center lg:justify-between px-4 sm:px-6 md:px-12 lg:px-32 pt-[64px] lg:pt-[88px] pointer-events-none">
 
 
                 <motion.div
