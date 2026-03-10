@@ -17,7 +17,36 @@ export const UploadProvider = ({ children }) => {
 
     const handleFiles = (files) => {
         const newFiles = Array.from(files);
-        setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+        // Check if this is a folder upload (files have webkitRelativePath)
+        const isFolder = newFiles.length > 0 && newFiles[0].webkitRelativePath;
+
+        if (isFolder) {
+            // Group files by their top-level folder name
+            const folderMap = {};
+            newFiles.forEach((file) => {
+                const parts = file.webkitRelativePath.split('/');
+                const folderName = parts[0];
+                if (!folderMap[folderName]) {
+                    folderMap[folderName] = { files: [], totalSize: 0 };
+                }
+                folderMap[folderName].files.push(file);
+                folderMap[folderName].totalSize += file.size;
+            });
+
+            const folderEntries = Object.entries(folderMap).map(([name, data]) => ({
+                _isFolder: true,
+                name,
+                size: data.totalSize,
+                files: data.files,
+                fileCount: data.files.length,
+            }));
+
+            setUploadedFiles((prev) => [...prev, ...folderEntries]);
+        } else {
+            setUploadedFiles((prev) => [...prev, ...newFiles]);
+        }
+
         if (!selectedMethod) setSelectedMethod('email');
     };
 

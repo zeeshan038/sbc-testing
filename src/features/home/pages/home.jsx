@@ -47,6 +47,7 @@ const Home = () => {
     const [isDragging, setIsDragging] = useState(false);
     const [addMenuOpen, setAddMenuOpen] = useState(false);
     const [plusClicked, setPlusClicked] = useState(false);
+    const [isMobile] = useState(() => window.innerWidth < 640);
     const fileInputRef = useRef(null);
     const folderInputRef = useRef(null);
     const addMenuRef = useRef(null);
@@ -101,14 +102,14 @@ const Home = () => {
                 className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500 opacity-15 rounded-full blur-[80px] pointer-events-none"
             />
 
-            <main className="relative z-10 flex items-center justify-center lg:justify-between h-[calc(100vh-90px)] px-6 md:px-12 lg:px-32 pointer-events-none">
+            <main className="relative z-10 flex items-end justify-center lg:items-center lg:justify-between h-[calc(100vh-85px)] lg:h-[calc(100vh-90px)] px-4 sm:px-6 md:px-12 lg:px-32 pb-5 sm:pb-0 pointer-events-none">
 
 
                 <motion.div
-                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
-                    className={`w-[320px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white dark:border-zinc-800 shadow-[0_40px_100px_rgba(43,58,140,0.15)] dark:shadow-[0_40px_100px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto relative z-20 transition-all duration-500 ring-1 ring-black/5 dark:ring-white/5 max-h-[500px] overflow-hidden ${isSettingsOpen ? 'rounded-l-[24px] rounded-r-none' : 'rounded-[24px]'}`}
+                    initial={isMobile ? false : { opacity: 0, y: 100 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
+                    className={`w-full sm:w-[320px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white dark:border-zinc-800 shadow-[0_-10px_40px_rgba(43,58,140,0.1)] sm:shadow-[0_40px_100px_rgba(43,58,140,0.15)] dark:shadow-[0_40px_100px_rgba(0,0,0,0.5)] flex flex-col pointer-events-auto relative z-20 transition-all duration-500 ring-1 ring-black/5 dark:ring-white/5 max-h-[85vh] sm:max-h-[500px] overflow-hidden rounded-[24px] ${isSettingsOpen ? 'sm:rounded-l-[24px] sm:rounded-r-none' : 'sm:rounded-[24px]'}`}
                 >
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
@@ -176,7 +177,9 @@ const Home = () => {
                                 ref={fileInputRef}
                                 type="file"
                                 multiple
+                                accept={transferType === 'video' ? 'video/*' : undefined}
                                 className="hidden"
+                                onClick={(e) => { e.target.value = ''; }}
                                 onChange={(e) => handleFiles(e.target.files)}
                             />
                             <input
@@ -186,6 +189,7 @@ const Home = () => {
                                 webkitdirectory=""
                                 directory=""
                                 className="hidden"
+                                onClick={(e) => { e.target.value = ''; }}
                                 onChange={(e) => handleFiles(e.target.files)}
                             />
 
@@ -311,8 +315,17 @@ const Home = () => {
                                                     transition={{ delay: idx * 0.04 }}
                                                     className="flex items-center gap-2 bg-blue-50/80 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl px-2.5 py-1.5"
                                                 >
-                                                    <FileText className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                                                    {file._isFolder ? (
+                                                        <Folder className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                                                    ) : (
+                                                        <FileText className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+                                                    )}
                                                     <span className="text-[11px] font-semibold text-gray-700 dark:text-zinc-200 flex-1 truncate">{file.name}</span>
+                                                    {file._isFolder && (
+                                                        <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 bg-blue-100/60 dark:bg-blue-800/40 px-1.5 py-0.5 rounded-md shrink-0">
+                                                            {file.fileCount} {file.fileCount === 1 ? 'file' : 'files'}
+                                                        </span>
+                                                    )}
                                                     <span className="text-[10px] text-gray-400 dark:text-zinc-500 shrink-0">{formatBytes(file.size)}</span>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
@@ -639,12 +652,13 @@ const Home = () => {
                     </p>
                 </motion.div>
 
-                <PreviewModal
-                    isOpen={isPreviewOpen}
-                    onClose={() => setIsPreviewOpen(false)}
-                    files={uploadedFiles}
-                />
             </main>
+
+            <PreviewModal
+                isOpen={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                files={uploadedFiles}
+            />
         </div>
     );
 };

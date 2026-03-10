@@ -27,7 +27,7 @@ const PreviewModal = ({ isOpen, onClose, files }) => {
         visible: {
             opacity: 1,
             transition: {
-                staggerChildren: 0.1
+                staggerChildren: 0.06
             }
         }
     };
@@ -35,6 +35,15 @@ const PreviewModal = ({ isOpen, onClose, files }) => {
     const itemVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 }
+    };
+
+    // Flatten all files: expand folder entries into their individual files
+    const displayFiles = files.flatMap((f) => (f._isFolder ? f.files : [f]));
+
+    const totalDisplayFiles = displayFiles.length;
+
+    const handleClose = () => {
+        onClose();
     };
 
     return (
@@ -46,7 +55,7 @@ const PreviewModal = ({ isOpen, onClose, files }) => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="absolute inset-0 bg-black/40 dark:bg-black/80 backdrop-blur-md"
                     >
                         {/* Animated Glow in backdrop */}
@@ -71,12 +80,12 @@ const PreviewModal = ({ isOpen, onClose, files }) => {
                                     Preview Uploads
                                 </h2>
                                 <p className="text-gray-500 dark:text-zinc-400 text-[11px] sm:text-xs mt-0.5 font-medium italic">
-                                    You have <span className="text-blue-600 dark:text-blue-400 font-semibold">{files.length}</span> {files.length === 1 ? 'file' : 'files'} ready to transfer
+                                    You have <span className="text-blue-600 dark:text-blue-400 font-semibold">{totalDisplayFiles}</span> {totalDisplayFiles === 1 ? 'file' : 'files'} ready to transfer
                                 </p>
                             </div>
                             <button
-                                onClick={onClose}
-                                className="w-8 h-8 rounded-full bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center text-gray-400 dark:text-zinc-500 hover:text-gray-900 dark:hover:text-white transition-all active:scale-90 relative z-10"
+                                onClick={handleClose}
+                                className="w-8 h-8 rounded-full bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center text-gray-400 dark:text-zinc-500 hover:text-gray-900 dark:hover:text-white transition-all active:scale-90 relative z-10 cursor-pointer"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -90,7 +99,7 @@ const PreviewModal = ({ isOpen, onClose, files }) => {
                                 animate="visible"
                                 className="flex gap-4 min-w-max pb-2"
                             >
-                                {files.map((file, idx) => (
+                                {displayFiles.map((file, idx) => (
                                     <motion.div
                                         key={idx}
                                         variants={itemVariants}
@@ -121,12 +130,12 @@ const PreviewModal = ({ isOpen, onClose, files }) => {
                                     Total Size
                                 </span>
                                 <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
-                                    {formatBytes(files.reduce((acc, f) => acc + f.size, 0))}
+                                    {formatBytes(displayFiles.reduce((acc, f) => acc + f.size, 0))}
                                 </span>
                             </div>
                             <button
-                                onClick={onClose}
-                                className="px-8 h-10 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_4px_12px_rgba(37,99,235,0.2)] hover:shadow-[0_8px_16px_rgba(37,99,235,0.3)] active:scale-95"
+                                onClick={handleClose}
+                                className="px-8 h-10 bg-[#202d71] hover:bg-blue-700 text-white text-[13px] font-bold rounded-xl transition-all shadow-[0_4px_12px_rgba(37,99,235,0.2)] hover:shadow-[0_8px_16px_rgba(37,99,235,0.3)] active:scale-95"
                             >
                                 Done
                             </button>
