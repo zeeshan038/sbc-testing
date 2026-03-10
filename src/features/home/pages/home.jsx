@@ -117,7 +117,7 @@ const Home = () => {
     ];
 
     return (
-        <div className="relative min-h-screen w-full font-sans text-gray-900 overflow-hidden bg-gradient-to-br from-[#f0f4f9] to-[#d6e4f9] pt-[85px] lg:pt-[90px]">
+        <div className="relative min-h-screen w-full font-sans text-gray-900 overflow-hidden bg-gradient-to-br from-[#f0f4f9] to-[#d6e4f9]">
 
             <motion.div
                 animate={{ rotate: [0, 90, 180, 270, 360], scale: [1, 1.1, 1] }}
@@ -130,7 +130,7 @@ const Home = () => {
                 className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500 opacity-15 rounded-full blur-[80px] pointer-events-none"
             />
 
-            <main className="relative z-10 flex items-end justify-center lg:items-center lg:justify-between h-[calc(100vh-85px)] lg:h-[calc(100vh-90px)] px-4 sm:px-6 md:px-12 lg:px-32 pb-5 sm:pb-0 pointer-events-none">
+            <main className="relative z-10 flex items-center justify-center h-screen px-4 sm:px-6 md:px-12 lg:px-32 pointer-events-none">
 
 
                 <motion.div
@@ -707,7 +707,7 @@ const Home = () => {
                     initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative pointer-events-none hidden lg:flex flex-col items-end gap-6 z-0 max-w-xl pr-4"
+                    className="absolute right-4 sm:right-6 md:right-12 lg:right-32 top-1/2 -translate-y-1/2 pointer-events-none hidden lg:flex flex-col items-end gap-6 z-0 max-w-xl"
                 >
                     <h1 className="text-6xl font-black tracking-tight text-[#1e2a6a] text-right leading-[1.1]">
                         Send large files with <br /> absolute <span className="relative inline-block"><span className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-400 blur-lg opacity-30"></span><span className="relative text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">simplicity</span></span>.
