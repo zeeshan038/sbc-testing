@@ -146,7 +146,7 @@ const Home = ({ isNavOpen }) => {
                 className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-500 opacity-15 rounded-full blur-[80px] pointer-events-none"
             />
 
-            <main className="fixed inset-0 z-10 flex items-start sm:items-center justify-center sm:justify-start lg:justify-between px-4 sm:px-6 md:px-12 lg:px-32 pt-24 sm:pt-0 pointer-events-none">
+            <main className="fixed inset-0 z-10 flex items-center justify-center sm:justify-start lg:justify-between px-4 sm:px-6 md:px-12 lg:px-32 pointer-events-none">
 
 
                 <motion.div
