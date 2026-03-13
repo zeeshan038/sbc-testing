@@ -25,7 +25,6 @@ import Contact from './features/info/pages/Contact';
 const AppContent = () => {
   const location = useLocation();
   const [isNavOpen, setIsNavOpen] = React.useState(false);
-
   return (
     <div className="w-full min-h-screen relative font-sans transition-colors duration-300 dark:bg-zinc-950 bg-white">
       <Navbar onMenuToggle={setIsNavOpen} />
