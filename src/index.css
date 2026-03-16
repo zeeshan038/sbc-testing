@@ -49,3 +49,9 @@
 .dark * {
   scrollbar-color: rgba(63, 63, 70, 0.8) transparent;
 }
+
+@keyframes shine {
+  0% { left: -100%; opacity: 0; }
+  20% { opacity: 0.5; }
+  100% { left: 100%; opacity: 0; }
+}

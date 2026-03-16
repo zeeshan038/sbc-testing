@@ -16,6 +16,7 @@ export const UploadProvider = ({ children }) => {
     const [message, setMessage] = useState('');
     const [recipients, setRecipients] = useState([]);
     const [senderEmail, setSenderEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     const handleFiles = (files) => {
         const newFiles = Array.from(files);
@@ -76,6 +77,7 @@ export const UploadProvider = ({ children }) => {
                 message, setMessage,
                 recipients, setRecipients,
                 senderEmail, setSenderEmail,
+                password, setPassword,
                 handleFiles, removeFile, removeRecipient,
                 hasFiles: uploadedFiles.length > 0
             }}

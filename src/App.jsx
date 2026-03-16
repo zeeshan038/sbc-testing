@@ -30,6 +30,7 @@ const AppContent = () => {
       <Navbar onMenuToggle={setIsNavOpen} />
       <Routes>
         <Route path="/" element={<Home isNavOpen={isNavOpen} />} />
+        <Route path="/transfer/:id" element={<Home isNavOpen={isNavOpen} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -44,10 +45,10 @@ const AppContent = () => {
           <Route path="settings" element={<SettingsTab />} />
         </Route>
 
-        {/* Info Pages Routes */}
         <Route path="/about" element={<About />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/:id" element={<Home isNavOpen={isNavOpen} />} />
       </Routes>
     </div>
   );

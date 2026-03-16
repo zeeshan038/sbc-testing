@@ -14,6 +14,7 @@ export const baseApi = createApi({
   baseQuery,
   endpoints: () => ({}),
   tagTypes: [
-"User"
+    "User",
+    "Transfer"
   ]
 }); 
