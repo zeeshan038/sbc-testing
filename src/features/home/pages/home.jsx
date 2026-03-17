@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 // Hooks
 import { useUpload } from '../../../shared/context/UploadContext';
@@ -31,6 +32,7 @@ const Home = ({ isNavOpen }) => {
         uploadedFiles, setUploadedFiles,
         selectedMethod, setSelectedMethod,
         selfDestruct, setSelfDestruct,
+        isDownloadAble, setIsDownloadAble,
         expiresIn, setExpiresIn,
         message, setMessage,
         recipients, setRecipients,
@@ -46,6 +48,7 @@ const Home = ({ isNavOpen }) => {
     const [addMenuOpen, setAddMenuOpen] = useState(false);
     const [recipientInput, setRecipientInput] = useState('');
     const [isMobile] = useState(() => window.innerWidth < 640);
+    const [isPreparingZip, setIsPreparingZip] = useState(false);
 
     // Refs
     const fileInputRef = useRef(null);
@@ -55,6 +58,9 @@ const Home = ({ isNavOpen }) => {
     // API Mutations/Queries
     const [downloadTransfer] = useDownloadTransferMutation();
     const { id: transferId } = useParams();
+    const [searchParams] = useSearchParams();
+    const isDownloadAbleFromQuery = searchParams.get('isDownloadAble') === 'true';
+
     const { data: transferData, isLoading: isFetchingTransfer } = useGetTransferQuery(
         { id: transferId, preview: true },
         { skip: !transferId }
@@ -72,39 +78,71 @@ const Home = ({ isNavOpen }) => {
         uploadedFiles, setUploadedFiles,
         senderEmail, recipients, setRecipients,
         transferType, expiresIn,
-        selectedMethod, selfDestruct, setMessage,
+        selectedMethod, selfDestruct, isDownloadAble, setMessage,
         totalSize, password
     });
 
     // Event Handlers
     const handleDownload = async () => {
         if (!transferId) return;
+        
+        // Defensive check: combining all possible flag names and locations
+        const isRestricted = isDownloadAbleFromQuery || 
+                           transferData?.isDownloadAble || 
+                           transferData?.transferDetails?.isDownloadAble ||
+                           transferData?.downloadable ||
+                           transferData?.transferDetails?.downloadable;
+                           
+        if (isRestricted) {
+            alert("Download is restricted for this video.");
+            return;
+        }
+
         try {
-            const response = await downloadTransfer({ id: transferId }).unwrap();
-            if (response.status) {
-                if (response.files && response.files.length > 1 && response.zipUrl) {
-                    // Download all files as a ZIP
-                    const link = document.createElement('a');
-                    link.href = response.zipUrl;
-                    link.download = 'all_files.zip';
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                } else if (response.files && response.files.length > 0) {
-                    // Download single file or multiple files individually (fallback)
-                    response.files.forEach(file => {
+            const fetchDownload = async () => {
+                const response = await downloadTransfer({ id: transferId }).unwrap();
+                if (response.status) {
+                    // If multiple files, check zipStatus
+                    if (response.files && response.files.length > 1) {
+                        if (response.zipStatus === 'processing') {
+                            setIsPreparingZip(true);
+                            return false; // Continue polling
+                        } else if (response.zipStatus === 'ready' && response.zipUrl) {
+                            setIsPreparingZip(false);
+                            window.location.href = response.zipUrl;
+                            return true; // Stop polling
+                        } else if (response.zipUrl) {
+                            setIsPreparingZip(false);
+                            window.location.href = response.zipUrl;
+                            return true;
+                        }
+                    } else if (response.files && response.files.length > 0) {
+                        // Single file fallback
+                        setIsPreparingZip(false);
+                        const file = response.files[0];
                         const link = document.createElement('a');
                         link.href = file.url;
-                        link.download = file.fileName;
+                        link.download = file.fileName || 'download';
                         document.body.appendChild(link);
                         link.click();
                         link.remove();
-                    });
+                        return true;
+                    }
                 }
+                return false;
+            };
+
+            const isDone = await fetchDownload();
+            if (!isDone) {
+                const intervalId = setInterval(async () => {
+                    const finished = await fetchDownload();
+                    if (finished) clearInterval(intervalId);
+                }, 3000);
             }
         } catch (err) {
             console.error("Download error:", err);
-            alert("Download failed. Link may have expired or self-destructed.");
+            setIsPreparingZip(false);
+            alert("Download task failed. Please try again.");
         }
     };
 
@@ -159,6 +197,8 @@ const Home = ({ isNavOpen }) => {
         };
     }, []);
 
+    const handlePreview = () => setIsPreviewOpen(true);
+
     return (
         <div className="fixed inset-0 w-screen h-[100svh] font-sans text-gray-900 overflow-hidden bg-gradient-to-br from-[#f0f4f9] to-[#d6e4f9] touch-none overscroll-none">
 
@@ -199,15 +239,19 @@ const Home = ({ isNavOpen }) => {
                             isFetchingTransfer={isFetchingTransfer}
                             onPreview={() => setIsPreviewOpen(true)}
                             onDownload={handleDownload}
+                            isDownloadAble={isDownloadAbleFromQuery || transferData?.transferDetails?.isDownloadAble || transferData?.isDownloadAble || transferData?.transferDetails?.downloadable || transferData?.downloadable}
                         />
                     ) : generatedLink ? (
                         <SuccessCard
                             shareLink={generatedLink}
+                            isDownloadAble={isDownloadAble}
                             onReset={() => {
-                                setGeneratedLink(null);
+                                setGeneratedLink('');
                                 setUploadedFiles([]);
                                 setRecipients([]);
                                 setMessage('');
+                                setSelfDestruct(false);
+                                setIsDownloadAble(false);
                             }}
                         />
                     ) : (
@@ -267,8 +311,11 @@ const Home = ({ isNavOpen }) => {
                                         setMessage={setMessage}
                                         password={password}
                                         setPassword={setPassword}
+                                        isDownloadAble={isDownloadAble}
+                                        setIsDownloadAble={setIsDownloadAble}
                                         expiresIn={expiresIn}
                                         setExpiresIn={setExpiresIn}
+                                        transferType={transferType}
                                     />
                                 )}
 
@@ -280,8 +327,11 @@ const Home = ({ isNavOpen }) => {
                                         setPassword={setPassword}
                                         selfDestruct={selfDestruct}
                                         setSelfDestruct={setSelfDestruct}
+                                        isDownloadAble={isDownloadAble}
+                                        setIsDownloadAble={setIsDownloadAble}
                                         expiresIn={expiresIn}
                                         setExpiresIn={setExpiresIn}
+                                        transferType={transferType}
                                     />
                                 )}
                             </div>
@@ -303,11 +353,40 @@ const Home = ({ isNavOpen }) => {
             <PreviewModal
                 isOpen={isPreviewOpen}
                 onClose={() => setIsPreviewOpen(false)}
-                files={transferId && transferData ? transferData.files : uploadedFiles}
+                files={transferId && transferData ? (transferData.files?.length > 0 ? transferData.files : transferData.transferDetails?.files || []) : uploadedFiles}
                 transferId={transferId}
-                totalSizeOverride={transferId && transferData ? transferData.transferDetails?.totalSize : null}
+                totalSizeOverride={transferId && transferData ? (transferData.transferDetails?.totalSize || transferData.totalSize) : null}
+                onPreview={handlePreview}
                 onDownload={transferId ? handleDownload : null}
+                isDownloadAble={transferId && (isDownloadAbleFromQuery || transferData?.transferDetails?.isDownloadAble || transferData?.isDownloadAble || transferData?.transferDetails?.downloadable || transferData?.downloadable)}
             />
+
+            {/* Polling/Processing Overlay */}
+            <AnimatePresence>
+                {isPreparingZip && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="bg-white dark:bg-[#121217] rounded-[32px] p-10 flex flex-col items-center max-w-sm text-center shadow-2xl border border-white/5"
+                        >
+                            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6 relative">
+                                <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                                <div className="absolute inset-0 border-4 border-blue-600/20 rounded-full" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Preparing your files...</h3>
+                            <p className="text-gray-500 dark:text-zinc-400 text-sm font-medium leading-relaxed">
+                                We're bundling your files into a high-speed ZIP archive. This may take a moment depending on the size.
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

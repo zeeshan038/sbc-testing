@@ -16,6 +16,7 @@ export const useFileTransfer = ({
     expiresIn, 
     selectedMethod, 
     selfDestruct, 
+    isDownloadAble,
     setMessage,
     totalSize,
     password
@@ -159,7 +160,13 @@ export const useFileTransfer = ({
                     expireIn: expiresIn === 'never' ? 'never' : `${expiresIn}d`,
                     password: password || undefined,
                     selfDestruct,
+                    downloadable: transferType === 'video' ? isDownloadAble : false,
                     type: transferType === 'video' ? 'Video' : 'File'
+                },
+                params: {
+                    getShareableLink: selectedMethod === 'link',
+                    selfDestruct: selfDestruct,
+                    isDownloadAble: transferType === 'video' ? isDownloadAble : false
                 }
             }).unwrap();
 

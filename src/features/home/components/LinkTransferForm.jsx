@@ -8,8 +8,11 @@ const LinkTransferForm = ({
     setPassword,
     selfDestruct,
     setSelfDestruct,
+    isDownloadAble,
+    setIsDownloadAble,
     expiresIn,
-    setExpiresIn
+    setExpiresIn,
+    transferType
 }) => {
     return (
         <motion.div
@@ -61,6 +64,40 @@ const LinkTransferForm = ({
                         />
                     </div>
                 </motion.div>
+
+                {transferType === 'video' && (
+                    <motion.div
+                        animate={{
+                            boxShadow: isDownloadAble ? '0 0 0 3px rgba(59,130,246,0.08)' : '0 0 0 0px rgba(59,130,246,0)',
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className={`flex items-center justify-between border rounded-xl px-2.5 py-2 cursor-pointer transition-colors duration-300 ${isDownloadAble ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/50' : 'bg-gray-50/80 dark:bg-zinc-800 border-gray-100 dark:border-zinc-700'}`}
+                        onClick={() => setIsDownloadAble(prev => !prev)}
+                    >
+                        <div className="flex items-center gap-2">
+                            <motion.div
+                                animate={isDownloadAble ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 transition-colors duration-300 ${isDownloadAble ? 'bg-blue-100 dark:bg-blue-500/20' : 'bg-gray-100 dark:bg-zinc-700'}`}
+                            >
+                                🚫
+                            </motion.div>
+                            <div className="flex flex-col">
+                                <span className={`text-[11px] font-bold transition-colors duration-300 ${isDownloadAble ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-zinc-300'}`}>
+                                    Downloadable
+                                </span>
+                                <span className="text-[9px] text-gray-400 dark:text-zinc-500 font-medium">Disable video downloads</span>
+                            </div>
+                        </div>
+                        <div className={`relative w-9 h-5 rounded-full transition-colors duration-300 shrink-0 ${isDownloadAble ? 'bg-gradient-to-r from-blue-400 to-indigo-400 dark:from-blue-500 dark:to-indigo-500 shadow-[0_0_8px_rgba(59,130,246,0.4)] dark:shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'bg-gray-200 dark:bg-zinc-700'}`}>
+                            <motion.div
+                                animate={{ x: isDownloadAble ? 16 : 2 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                className="absolute top-[2px] w-4 h-4 bg-white dark:bg-zinc-100 rounded-full shadow-md"
+                            />
+                        </div>
+                    </motion.div>
+                )}
 
                 <div className="mt-1">
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">⏰ Expires in</p>

@@ -1,9 +1,11 @@
-import React from 'react';
+import  { useState } from 'react';
 import { motion } from 'framer-motion';
-import { DownloadCloud, Flag, Loader2 } from 'lucide-react';
+import { DownloadCloud, Flag, Loader2, ChevronDown } from 'lucide-react';
 
-const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload }) => {
-    const [isDownloading, setIsDownloading] = React.useState(false);
+const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload, isDownloadAble: isDownloadAbleProp, downloadable }) => {
+    console.log("Downloadable............" , isDownloadAbleProp)
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [showQualities, setShowQualities] = useState(false);
 
     if (isFetchingTransfer) {
         return (
@@ -36,8 +38,26 @@ const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload 
         );
     }
 
-    const { files, transferDetails } = transferData || {};
-    const { totalSize, expireIn } = transferDetails || {};
+    const { files = [], transferDetails = {} } = transferData || {};
+    // Fallback if data is not nested as expected
+    const finalFiles = files.length > 0 ? files : (transferDetails.files || []);
+    const finalTransferDetails = transferDetails.shortId ? transferDetails : (transferData.transferDetails || {});
+    
+    // Helper to check for true boolean or "true" string
+    const isTrue = (val) => val === true || val === 'true';
+
+    // Final check for isDownloadAble combining prop, nested data and query
+    // Checking all case variations since the backend field might be named differently
+    const isRestricted = isTrue(isDownloadAbleProp) || 
+                        isTrue(downloadable) ||
+                        isTrue(finalTransferDetails.isDownloadAble) || 
+                        isTrue(finalTransferDetails.downloadable) || 
+                        isTrue(finalTransferDetails.isDownloadable) || 
+                        isTrue(transferData.isDownloadAble) || 
+                        isTrue(transferData.downloadable) ||
+                        isTrue(transferData.isDownloadable);
+
+    const { totalSize, expireIn } = finalTransferDetails;
     
     // Display "Expires in [time]" instead of a full date if it's a duration like "7d"
     const expiryText = expireIn ? `Expires in ${expireIn}` : 'No expiry set';
@@ -51,10 +71,13 @@ const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload 
     };
 
     const handleDownloadClick = async () => {
+        if (isRestricted) return;
         setIsDownloading(true);
         await onDownload();
         setIsDownloading(false);
     };
+
+    const singleVideo = finalFiles.length === 1 && finalFiles[0].qualities?.length > 0 ? finalFiles[0] : null;
 
     return (
         <div className="flex flex-col min-h-0 h-full">
@@ -83,7 +106,7 @@ const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload 
             {/* Transfer Info Section - Bottom aligned */}
             <div className="bg-gray-50/80 dark:bg-zinc-800/80 mx-4 p-4 rounded-xl border border-gray-100 dark:border-zinc-700/50 mb-4 flex items-center justify-between shadow-sm">
                 <div className="flex flex-col">
-                    <span className="text-[12px] font-bold text-gray-700 dark:text-zinc-300">{files.length} {files.length === 1 ? 'File' : 'Files'}</span>
+                    <span className="text-[12px] font-bold text-gray-700 dark:text-zinc-300">{finalFiles.length} {finalFiles.length === 1 ? 'File' : 'Files'}</span>
                     <span className="text-[11px] text-gray-500 font-medium">{formatBytes(totalSize)} Total size</span>
                 </div>
                 <button 
@@ -95,24 +118,83 @@ const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload 
             </div>
 
             {/* Footer / Buttons Section */}
-            <div className="px-5 pb-6 pt-1 flex items-center gap-3 shrink-0">
+            <div className="px-5 pb-6 pt-1 flex items-center gap-3 shrink-0 relative">
                 <button className="w-12 h-12 flex items-center justify-center bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all shadow-sm">
                     <Flag className="w-5 h-5" />
                 </button>
-                <button 
-                    onClick={handleDownloadClick}
-                    disabled={isDownloading}
-                    className="flex-1 h-12 bg-[#2b3a8c] hover:bg-[#1a235a] text-white rounded-[24px] font-bold text-[15px] shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                    {isDownloading ? (
-                        <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Starting...
-                        </>
-                    ) : (
-                        files.length > 1 ? 'Download' : 'Download'
-                    )}
-                </button>
+
+                {singleVideo && !isRestricted ? (
+                    <div className="flex-1 relative">
+                        <button 
+                            onClick={() => setShowQualities(!showQualities)}
+                            disabled={isDownloading}
+                            className="w-full h-12 bg-[#2b3a8c] hover:bg-[#1a235a] text-white rounded-[24px] font-bold text-[15px] shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {isDownloading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    Starting...
+                                </>
+                            ) : (
+                                <>
+                                    Download Quality
+                                    <ChevronDown className="w-5 h-5 ml-1" />
+                                </>
+                            )}
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showQualities && (
+                            <>
+                                {/* Backdrop for closing when clicking outside */}
+                                <div 
+                                    className="fixed inset-0 z-40" 
+                                    onClick={() => setShowQualities(false)} 
+                                />
+                                <div className="absolute bottom-full left-0 right-0 mb-3 bg-white dark:bg-zinc-800 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-black/50 border border-gray-100 dark:border-zinc-700 py-2 z-50 overflow-hidden transform-gpu">
+                                    <div className="px-3 pb-2 mb-2 border-b border-gray-100 dark:border-zinc-700">
+                                        <p className="text-[11px] font-bold text-gray-500 dark:text-zinc-400 px-2 uppercase tracking-wider">Select Download Quality</p>
+                                    </div>
+                                    <div className="max-h-56 overflow-y-auto no-scrollbar">
+                                        {[...singleVideo.qualities].sort((a, b) => b.isOriginal ? 1 : a.isOriginal ? -1 : 0).map((q, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => {
+                                                    setShowQualities(false);
+                                                    const link = document.createElement('a');
+                                                    link.href = q.url;
+                                                    link.download = singleVideo.fileName || 'video';
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    link.remove();
+                                                }}
+                                                className="w-full text-left px-5 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-[13px] font-bold text-gray-700 dark:text-zinc-300 transition-colors flex items-center justify-between group"
+                                            >
+                                                <span>{q.label} {q.isOriginal && <span className="text-[10px] text-gray-400 ml-1 font-medium">(Original)</span>}</span>
+                                                <DownloadCloud className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                ) : (
+                    <button 
+                        onClick={handleDownloadClick}
+                        disabled={isDownloading || isRestricted}
+                        className="flex-1 h-12 bg-[#2b3a8c] hover:bg-[#1a235a] text-white rounded-[24px] font-bold text-[15px] shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                        {isDownloading ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Starting...
+                            </>
+                        ) : (
+                            isRestricted ? 'Download restricted' : (finalFiles.length > 1 ? 'Download all' : 'Download')
+                        )}
+                    </button>
+                )}
             </div>
         </div>
     );

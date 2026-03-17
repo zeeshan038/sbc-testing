@@ -16,7 +16,7 @@ const FileIcon = ({ type, name }) => {
     return <File className="w-6 h-6 sm:w-7 sm:h-7 text-gray-500" />;
 };
 
-const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, onDownload }) => {
+const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, onDownload, isDownloadAble }) => {
     const [activeImage, setActiveImage] = React.useState(null);
     const [activeVideo, setActiveVideo] = React.useState(null);
     const [isDownloading, setIsDownloading] = React.useState(false);
@@ -40,7 +40,7 @@ const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, o
         }
     };
 
-    const displayFiles = files.flatMap((f) => (f._isFolder ? f.files : [f]));
+    const displayFiles = (files || []).flatMap((f) => (f._isFolder ? f.files : [f]));
     const totalDisplayFiles = displayFiles.length;
 
     const totalCalculatedSize = displayFiles.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
@@ -100,7 +100,7 @@ const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, o
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.98, y: 10 }}
                         transition={{ type: "spring", damping: 25, stiffness: 400 }}
-                        className="relative w-full max-w-2xl bg-white dark:bg-[#121217] rounded-[24px] shadow-[0_32px_80px_rgba(0,0,0,0.3)] overflow-hidden border border-gray-100 dark:border-white/5 z-10"
+                        className="relative w-full max-w-4xl bg-white dark:bg-[#121217] rounded-[24px] shadow-[0_32px_80px_rgba(0,0,0,0.3)] overflow-hidden border border-gray-100 dark:border-white/5 z-10"
                     >
                         {/* Header */}
                         <div className="p-5 sm:p-8 border-b border-gray-50 dark:border-white/5 flex items-center justify-between relative overflow-hidden">
@@ -124,7 +124,7 @@ const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, o
                         </div>
 
                         {/* Files Area */}
-                        <div className="p-5 sm:p-8 overflow-x-auto no-scrollbar bg-gray-50/10 dark:bg-[#0e0e12]/30">
+                        <div className="p-5 sm:p-8 overflow-y-auto overflow-x-auto no-scrollbar bg-gray-50/10 dark:bg-[#0e0e12]/30 min-h-[300px] max-h-[60vh]">
                             <motion.div
                                 initial="hidden"
                                 animate="visible"
@@ -146,7 +146,7 @@ const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, o
                                     >
                                         <div className="aspect-[4/5] bg-white dark:bg-[#1a1a24] rounded-2xl border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center p-3 gap-3 transition-all duration-300 group-hover:border-blue-500/40 group-hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)] dark:group-hover:shadow-[0_12px_24px_rgba(0,0,0,0.3)] overflow-hidden relative">
                                             {/* Single Download Icon */}
-                                            {file.url && (
+                                            {file.url && !isDownloadAble && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
@@ -218,15 +218,15 @@ const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, o
                                 {onDownload && (
                                     <button
                                         onClick={handleDownloadClick}
-                                        disabled={isDownloading}
-                                        className="px-6 h-11 bg-blue-600 hover:bg-blue-700 text-white text-[14px] font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                                        disabled={isDownloading || isDownloadAble}
+                                        className="px-6 h-11 bg-blue-600 hover:bg-blue-700 text-white text-[14px] font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         {isDownloading ? (
                                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                         ) : (
                                             <DownloadCloud className="w-4 h-4" />
                                         )}
-                                        Download
+                                        {isDownloadAble ? 'Download restricted' : 'Download'}
                                     </button>
                                 )}
                                 <button

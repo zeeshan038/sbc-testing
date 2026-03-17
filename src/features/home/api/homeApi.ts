@@ -25,16 +25,17 @@ const homeApi = baseApi.injectEndpoints({
             }),
         }),
         finalizeTransfer: builder.mutation({
-            query: ({ body }) => ({
+            query: ({ body, params }) => ({
                 url: `${home_url}/send`,
                 method: "POST",
                 body,
+                params,
             }),
             invalidatesTags: ["Transfer"],
         }),
         getTransfer: builder.query({
             query: ({ id, preview = true }) => ({
-                url: `${home_url}/download/${id}`,
+                url: `${home_url}/get-transfer/${id}`,
                 params: { preview }
             }),
             providesTags: ["Transfer"],

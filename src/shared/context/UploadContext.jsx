@@ -12,6 +12,7 @@ export const UploadProvider = ({ children }) => {
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [linkShareType, setLinkShareType] = useState('email');
     const [selfDestruct, setSelfDestruct] = useState(false);
+    const [isDownloadAble, setIsDownloadAble] = useState(false);
     const [expiresIn, setExpiresIn] = useState('7');
     const [message, setMessage] = useState('');
     const [recipients, setRecipients] = useState([]);
@@ -73,6 +74,7 @@ export const UploadProvider = ({ children }) => {
                 selectedMethod, setSelectedMethod,
                 linkShareType, setLinkShareType,
                 selfDestruct, setSelfDestruct,
+                isDownloadAble, setIsDownloadAble,
                 expiresIn, setExpiresIn,
                 message, setMessage,
                 recipients, setRecipients,

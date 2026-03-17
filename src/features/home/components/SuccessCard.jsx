@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Copy, Check } from 'lucide-react';
 
-const SuccessCard = ({ shareLink, onReset }) => {
+const SuccessCard = ({ shareLink, onReset, isDownloadAble }) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -40,7 +40,14 @@ const SuccessCard = ({ shareLink, onReset }) => {
                 </div>
             </div>
 
-            <h2 className="text-[28px] font-extrabold text-[#111827] dark:text-gray-100 mb-2">Success!</h2>
+            <h2 className="text-[28px] font-extrabold text-[#111827] dark:text-gray-100 mb-1">Success!</h2>
+            {isDownloadAble && (
+                <div className="flex justify-center mb-3">
+                    <span className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-900/40">
+                       🚫 Download Restricted
+                    </span>
+                </div>
+            )}
             <p className="text-[15px] text-gray-500 dark:text-zinc-400 font-medium leading-relaxed mb-8">
                 Your file(s) have been uploaded, you<br /> can use the link below.
             </p>
