@@ -23,6 +23,7 @@ export const useFileTransfer = ({
 }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadSpeed, setUploadSpeed] = useState(0);
     const [generatedLink, setGeneratedLink] = useState(null);
 
     const [initiateMultipart] = useInitiateMultipartMutation();
@@ -119,6 +120,7 @@ export const useFileTransfer = ({
 
         setIsUploading(true);
         setUploadProgress(0);
+        setUploadSpeed(0);
 
         try {
             // Flatten files
@@ -133,6 +135,7 @@ export const useFileTransfer = ({
 
             const totalBytes = allFiles.reduce((acc, f) => acc + f.size, 0);
             let uploadedBytesMap = new Map();
+            const startTime = Date.now();
 
             const fileUploadPromises = allFiles.map(file => {
                 return processFile(file, (partPercentage) => {
@@ -141,6 +144,11 @@ export const useFileTransfer = ({
                     
                     const totalUploaded = Array.from(uploadedBytesMap.values()).reduce((a, b) => a + b, 0);
                     setUploadProgress(Math.round((totalUploaded / totalBytes) * 100));
+
+                    const durationInSeconds = (Date.now() - startTime) / 1000;
+                    if (durationInSeconds > 0) {
+                        setUploadSpeed(totalUploaded / durationInSeconds);
+                    }
                 });
             });
 
@@ -184,12 +192,14 @@ export const useFileTransfer = ({
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
+            setUploadSpeed(0);
         }
     };
 
     return {
         isUploading,
         uploadProgress,
+        uploadSpeed,
         generatedLink,
         setGeneratedLink,
         handleTransfer

@@ -21,6 +21,7 @@ import EmailTransferForm from '../components/EmailTransferForm';
 import LinkTransferForm from '../components/LinkTransferForm';
 import TransferAction from '../components/TransferAction';
 import BackgroundBlobs from '../components/BackgroundBlobs';
+import UploadingCard from '../components/UploadingCard';
 
 // Utilities
 import { formatBytes } from '../../../shared/utils/formatBytes';
@@ -71,6 +72,7 @@ const Home = ({ isNavOpen }) => {
     const {
         isUploading,
         uploadProgress,
+        uploadSpeed,
         generatedLink,
         setGeneratedLink,
         handleTransfer
@@ -253,6 +255,12 @@ const Home = ({ isNavOpen }) => {
                                 setSelfDestruct(false);
                                 setIsDownloadAble(false);
                             }}
+                        />
+                    ) : isUploading ? (
+                        <UploadingCard 
+                            uploadProgress={uploadProgress} 
+                            uploadSpeed={uploadSpeed}
+                            formatBytes={formatBytes}
                         />
                     ) : (
                         <div className="flex flex-col relative z-10 bg-white/40 dark:bg-zinc-900/40 rounded-[inherit] min-h-0 flex-1 px-3 py-2.5">
