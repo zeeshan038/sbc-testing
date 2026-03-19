@@ -150,12 +150,7 @@ const PreviewModal = ({ isOpen, onClose, files, transferId, totalSizeOverride, o
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        const link = document.createElement('a');
-                                                        link.href = file.url;
-                                                        link.download = file.name || file.fileName;
-                                                        document.body.appendChild(link);
-                                                        link.click();
-                                                        link.remove();
+                                                        if (onDownload) onDownload(file.key);
                                                     }}
                                                     className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-zinc-900/90 text-gray-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 rounded-lg shadow-sm border border-gray-100 dark:border-white/5 transition-all z-20 cursor-pointer"
                                                     title="Download file"

@@ -31,7 +31,7 @@ const VideoPlayer = ({ src, title, resolution, qualities = [], onClose }) => {
         const time = videoRef.current.currentTime;
         const wasPlaying = isPlaying;
         
-        setIsLoading(true);
+        // Only show loading if it takes longer than a brief moment
         setQuality(qObj.label);
         setCurrentSrc(qObj.url || qObj.key);
         setShowSettings(false);
@@ -39,11 +39,19 @@ const VideoPlayer = ({ src, title, resolution, qualities = [], onClose }) => {
         const onMetadata = () => {
             if (videoRef.current) {
                 videoRef.current.currentTime = time;
-                if (wasPlaying) videoRef.current.play().catch(() => {});
+                if (wasPlaying) {
+                    // Force play if it was playing
+                    const playPromise = videoRef.current.play();
+                    if (playPromise !== undefined) {
+                      playPromise.catch(() => {});
+                    }
+                }
                 videoRef.current.removeEventListener('loadedmetadata', onMetadata);
             }
         };
         videoRef.current.addEventListener('loadedmetadata', onMetadata);
+        // Also add onCanPlay as a fallback
+        videoRef.current.addEventListener('canplay', onMetadata, { once: true });
     };
 
     const handleProgress = () => {
@@ -142,6 +150,7 @@ const VideoPlayer = ({ src, title, resolution, qualities = [], onClose }) => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+                        transition={{ delay: 0.5 }} // Delay spinner slightly to avoid flicker on fast loads
                         className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none"
                     >
                         <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />

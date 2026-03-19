@@ -66,13 +66,15 @@ const Home = ({ isNavOpen }) => {
         { id: transferId, preview: true },
         { skip: !transferId }
     );
-      console.log("Transfer Daa............" , transferData)
+    console.log("Transfer Daa............", transferData)
     // Business Logic Hook
     const totalSize = uploadedFiles.reduce((acc, file) => acc + file.size, 0);
     const {
         isUploading,
         uploadProgress,
         uploadSpeed,
+        uploadedBytes,
+        totalBytes: currentTransferTotalBytes,
         generatedLink,
         setGeneratedLink,
         handleTransfer
@@ -85,16 +87,16 @@ const Home = ({ isNavOpen }) => {
     });
 
     // Event Handlers
-    const handleDownload = async () => {
+    const handleDownload = async (key) => {
         if (!transferId) return;
-        
+
         // Defensive check: combining all possible flag names and locations
-        const isRestricted = isDownloadAbleFromQuery || 
-                           transferData?.isDownloadAble || 
-                           transferData?.transferDetails?.isDownloadAble ||
-                           transferData?.downloadable ||
-                           transferData?.transferDetails?.downloadable;
-                           
+        const isRestricted = isDownloadAbleFromQuery ||
+            transferData?.isDownloadAble ||
+            transferData?.transferDetails?.isDownloadAble ||
+            transferData?.downloadable ||
+            transferData?.transferDetails?.downloadable;
+
         if (isRestricted) {
             alert("Download is restricted for this video.");
             return;
@@ -102,7 +104,7 @@ const Home = ({ isNavOpen }) => {
 
         try {
             const fetchDownload = async () => {
-                const response = await downloadTransfer({ id: transferId }).unwrap();
+                const response = await downloadTransfer({ id: transferId, key }).unwrap();
                 if (response.status) {
                     // If multiple files, check zipStatus
                     if (response.files && response.files.length > 1) {
@@ -123,6 +125,7 @@ const Home = ({ isNavOpen }) => {
                         setIsPreparingZip(false);
                         const file = response.files[0];
                         const link = document.createElement('a');
+                        // Force backend to set Content-Disposition: attachment
                         link.href = file.url;
                         link.download = file.fileName || 'download';
                         document.body.appendChild(link);
@@ -257,9 +260,11 @@ const Home = ({ isNavOpen }) => {
                             }}
                         />
                     ) : isUploading ? (
-                        <UploadingCard 
-                            uploadProgress={uploadProgress} 
+                        <UploadingCard
+                            uploadProgress={uploadProgress}
                             uploadSpeed={uploadSpeed}
+                            uploadedBytes={uploadedBytes}
+                            totalBytes={currentTransferTotalBytes}
                             formatBytes={formatBytes}
                         />
                     ) : (

@@ -70,10 +70,10 @@ const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload,
         return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
     };
 
-    const handleDownloadClick = async () => {
+    const handleDownloadClick = async (key) => {
         if (isRestricted) return;
         setIsDownloading(true);
-        await onDownload();
+        await onDownload(key);
         setIsDownloading(false);
     };
 
@@ -161,12 +161,7 @@ const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload,
                                                 key={idx}
                                                 onClick={() => {
                                                     setShowQualities(false);
-                                                    const link = document.createElement('a');
-                                                    link.href = q.url;
-                                                    link.download = singleVideo.fileName || 'video';
-                                                    document.body.appendChild(link);
-                                                    link.click();
-                                                    link.remove();
+                                                    handleDownloadClick(q.key);
                                                 }}
                                                 className="w-full text-left px-5 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-[13px] font-bold text-gray-700 dark:text-zinc-300 transition-colors flex items-center justify-between group"
                                             >

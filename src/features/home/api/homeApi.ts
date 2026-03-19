@@ -41,11 +41,19 @@ const homeApi = baseApi.injectEndpoints({
             providesTags: ["Transfer"],
         }),
         downloadTransfer: builder.mutation({
-            query: ({ id }) => ({
+            query: ({ id, ...params }) => ({
                 url: `${home_url}/download/${id}`,
-                params: { preview: false }
+                params: { preview: false, ...params }
             }),
             invalidatesTags: ["Transfer"],
+        }),
+        speedTest: builder.mutation({
+            query: ({ method = 'GET', body, params }) => ({
+                url: `${home_url}/speed-test`,
+                method,
+                body,
+                params,
+            }),
         }),
     }),
 });
@@ -56,5 +64,6 @@ export const {
     useCompleteMultipartMutation,
     useFinalizeTransferMutation,
     useGetTransferQuery,
-    useDownloadTransferMutation
+    useDownloadTransferMutation,
+    useSpeedTestMutation
 } = homeApi;

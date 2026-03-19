@@ -1,7 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const UploadingCard = ({ uploadProgress, uploadSpeed, formatBytes }) => {
+const UploadingCard = ({ uploadProgress, uploadSpeed, uploadedBytes, totalBytes, formatBytes }) => {
+    const calculateRemainingTime = () => {
+        if (uploadSpeed <= 0) return null;
+        const remainingBytes = totalBytes - uploadedBytes;
+        const seconds = Math.ceil(remainingBytes / uploadSpeed);
+        
+        if (seconds < 60) return `${seconds} Second(s) remaining`;
+        const minutes = Math.ceil(seconds / 60);
+        return `${minutes} Minute(s) remaining`;
+    };
+
+    const remainingTime = calculateRemainingTime();
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -36,19 +48,19 @@ const UploadingCard = ({ uploadProgress, uploadSpeed, formatBytes }) => {
                         className="text-[#2b3a8c] dark:text-blue-500"
                         initial={{ strokeDashoffset: 289 }}
                         animate={{ strokeDashoffset: 289 - (289 * uploadProgress) / 100 }}
-                        transition={{ ease: "easeOut", duration: 0.3 }}
+                        transition={{ ease: "easeOut", duration: 0.1 }}
                     />
                 </svg>
-                
+
                 {/* Progress Percentage inside */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span 
+                    <span
                         className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tighter"
                     >
                         {Math.round(uploadProgress)}%
                     </span>
                 </div>
-                
+
                 {/* Pulsing ring behind */}
                 <div className="absolute inset-0 animate-ping rounded-full border-4 border-[#2b3a8c]/20 z-[-1]" />
             </div>
@@ -56,30 +68,27 @@ const UploadingCard = ({ uploadProgress, uploadSpeed, formatBytes }) => {
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
                 Transferring files
             </h3>
-            <p className="text-gray-500 dark:text-zinc-400 text-[15px] font-medium leading-relaxed max-w-[250px] mb-6">
+            
+            <div className="flex flex-col gap-1 mb-6">
+                <p className="text-gray-700 dark:text-zinc-200 text-[15px] font-bold">
+                    {formatBytes(uploadedBytes)} uploaded of {formatBytes(totalBytes)} ({formatBytes(uploadSpeed)}/s)
+                </p>
+                {remainingTime && (
+                    <p className="text-gray-500 dark:text-zinc-400 text-[13px] font-medium">
+                        ± {remainingTime}
+                    </p>
+                )}
+            </div>
+
+            <p className="text-gray-500 dark:text-zinc-400 text-[13px] font-medium leading-relaxed max-w-[250px] mb-2">
                 Please keep this window open until the upload finishes.
             </p>
-            
-            {uploadSpeed > 0 && (
-                <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2.5 bg-white/60 dark:bg-black/40 px-5 py-2.5 rounded-2xl border border-gray-200 dark:border-white/5 shadow-sm backdrop-blur-md"
-                >
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                    </span>
-                    <span className="text-[15px] font-bold text-gray-800 dark:text-gray-200 tracking-tight">
-                        {formatBytes(uploadSpeed)}/s
-                    </span>
-                </motion.div>
-            )}
+
             {/* Background glowing orb */}
             <motion.div
-                 animate={{ rotate: 360 }}
-                 transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
-                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] rounded-full bg-gradient-to-tr from-[#2b3a8c]/10 to-blue-400/10 blur-3xl -z-10 pointer-events-none"
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] rounded-full bg-gradient-to-tr from-[#2b3a8c]/10 to-blue-400/10 blur-3xl -z-10 pointer-events-none"
             />
         </motion.div>
     );
