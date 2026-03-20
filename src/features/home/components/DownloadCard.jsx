@@ -1,196 +1,154 @@
-import  { useState } from 'react';
-import { motion } from 'framer-motion';
-import { DownloadCloud, Flag, Loader2, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { DownloadCloud, Flag, Loader2, ChevronDown, Check } from 'lucide-react';
+import { formatBytes } from '../../../shared/utils/formatTransfer';
 
-const DownloadCard = ({ transferData, isFetchingTransfer, onPreview, onDownload, isDownloadAble: isDownloadAbleProp, downloadable }) => {
-    console.log("Downloadable............" , isDownloadAbleProp)
-    const [isDownloading, setIsDownloading] = useState(false);
+const DownloadCard = ({ 
+    transferData, 
+    isFetchingTransfer, 
+    onPreview, 
+    onDownload, 
+    isDownloadAble
+}) => {
+    const [isPreparing, setIsPreparing] = useState(false);
     const [showQualities, setShowQualities] = useState(false);
 
     if (isFetchingTransfer) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 space-y-4">
+            <div className="flex flex-col items-center justify-center p-12 space-y-4 h-full bg-[#12141c] rounded-[inherit]">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                 <p className="text-sm font-medium text-gray-500">Retrieving transfer details...</p>
             </div>
         );
     }
 
-    if (!transferData) {
-        return (
-            <div className="flex flex-col items-center justify-center p-12 text-center h-full">
-                <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-[28px] flex items-center justify-center mb-6 shadow-sm border border-red-100 dark:border-red-900/30">
-                    <Flag className="w-10 h-10" />
-                </div>
-                <h3 className="text-[20px] font-bold text-[#1e2a6a] dark:text-gray-100 mb-2">Transfer not found</h3>
-                <p className="text-[14px] text-gray-500 dark:text-zinc-400 font-medium leading-relaxed">
-                    This link may have expired,<br /> been deleted, or is invalid.
-                </p>
-                <div className="mt-8 w-full">
-                   <button 
-                    onClick={() => window.location.href = '/'}
-                    className="w-full py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-xl font-bold text-[13px] hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-                   >
-                     Go to Homepage
-                   </button>
-                </div>
-            </div>
-        );
-    }
-
     const { files = [], transferDetails = {} } = transferData || {};
-    // Fallback if data is not nested as expected
     const finalFiles = files.length > 0 ? files : (transferDetails.files || []);
-    const finalTransferDetails = transferDetails.shortId ? transferDetails : (transferData.transferDetails || {});
-    
-    // Helper to check for true boolean or "true" string
-    const isTrue = (val) => val === true || val === 'true';
-
-    // Final check for isDownloadAble combining prop, nested data and query
-    // Checking all case variations since the backend field might be named differently
-    const isRestricted = isTrue(isDownloadAbleProp) || 
-                        isTrue(downloadable) ||
-                        isTrue(finalTransferDetails.isDownloadAble) || 
-                        isTrue(finalTransferDetails.downloadable) || 
-                        isTrue(finalTransferDetails.isDownloadable) || 
-                        isTrue(transferData.isDownloadAble) || 
-                        isTrue(transferData.downloadable) ||
-                        isTrue(transferData.isDownloadable);
-
-    const { totalSize, expireIn } = finalTransferDetails;
-    
-    // Display "Expires in [time]" instead of a full date if it's a duration like "7d"
-    const expiryText = expireIn ? `Expires in ${expireIn}` : 'No expiry set';
-
-    const formatBytes = (bytes) => {
-        if (!bytes) return '0 B';
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-        return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-    };
-
-    const handleDownloadClick = async (key) => {
-        if (isRestricted) return;
-        setIsDownloading(true);
-        await onDownload(key);
-        setIsDownloading(false);
-    };
+    const totalSize = transferData?.totalSize || transferDetails?.totalSize || 0;
+    const expireIn = transferDetails?.expireIn || transferData?.expireIn || '7d';
 
     const singleVideo = finalFiles.length === 1 && finalFiles[0].qualities?.length > 0 ? finalFiles[0] : null;
 
     return (
-        <div className="flex flex-col min-h-0 h-full">
+        <div className="flex flex-col items-center justify-between h-full bg-[#12141c] rounded-[inherit] p-6 sm:p-7 text-center relative overflow-hidden">
             {/* Header / Icon Section */}
-            <div className="flex flex-col items-center justify-center pt-10 pb-6 px-6 shrink-0">
-                <div className="relative mb-6">
-                    {/* Shadow/Glow behind icon */}
-                    <div className="absolute inset-x-0 bottom-0 top-1/2 bg-blue-100/30 rounded-full blur-2xl transform scale-150 opacity-40" />
-                    <div className="relative">
-                        <svg width="110" height="85" viewBox="0 0 110 85" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            {/* Cloud Shape */}
-                            <path d="M78.5 70C91.4787 70 102 59.4787 102 46.5C102 34.1951 92.548 24.103 80.48 22.756C77.42 8.65 64.91 0 50 0C37.89 0 27.42 5.75 20.8 14.54C10.1 16.51 2 25.84 2 37.12C2 49.76 12.24 60 24.88 60" stroke="#2b3a8c" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                            {/* Down Arrow */}
-                            <path d="M52 35V75M52 75L38 61M52 75L66 61" stroke="#ef4444" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                    </div>
+            <div className="flex flex-col items-center w-full">
+                <div className="relative mb-5 sm:mb-6 mt-2 sm:mt-3">
+                    {/* Cloud Icon with Red Arrow */}
+                    <svg width="96" height="72" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        {/* Outer Cloud Glow */}
+                        <path 
+                            d="M84.5 75C98.4787 75 110 63.4787 110 49.5C110 36.1951 99.548 25.103 86.48 23.756C83.42 8.65 69.91 0 54 0C40.89 0 29.42 6.75 22.8 16.54C11.1 18.51 2 28.84 2 41.12C2 54.76 13.24 66 26.88 66" 
+                            stroke="#2b3a8c" 
+                            strokeWidth="4" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                            className="opacity-50"
+                        />
+                        <path 
+                            d="M84.5 75C98.4787 75 110 63.4787 110 49.5C110 36.1951 99.548 25.103 86.48 23.756C83.42 8.65 69.91 0 54 0C40.89 0 29.42 6.75 22.8 16.54C11.1 18.51 2 28.84 2 41.12C2 54.76 13.24 66 26.88 66" 
+                            stroke="#3b82f6" 
+                            strokeWidth="4.5" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        />
+                        {/* Red Down Arrow */}
+                        <path d="M54 35V75M54 75L40 61M54 75L68 61" stroke="#ef4444" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                 </div>
 
-                <h2 className="text-[20px] font-bold text-[#1e2a6a] dark:text-gray-100 mb-1">Your download is ready</h2>
-                <p className="text-[14px] text-gray-500 font-medium">{expiryText}</p>
+                <h2 className="text-[22px] sm:text-[24px] font-bold text-white mb-1.5 tracking-tight">Your download is ready</h2>
+                <p className="text-[14px] sm:text-[15px] text-zinc-500 font-semibold">Expires in {expireIn}</p>
             </div>
 
-            {/* Spacer to push content down */}
-            <div className="flex-1" />
-
-            {/* Transfer Info Section - Bottom aligned */}
-            <div className="bg-gray-50/80 dark:bg-zinc-800/80 mx-4 p-4 rounded-xl border border-gray-100 dark:border-zinc-700/50 mb-4 flex items-center justify-between shadow-sm">
-                <div className="flex flex-col">
-                    <span className="text-[12px] font-bold text-gray-700 dark:text-zinc-300">{finalFiles.length} {finalFiles.length === 1 ? 'File' : 'Files'}</span>
-                    <span className="text-[11px] text-gray-500 font-medium">{formatBytes(totalSize)} Total size</span>
+            {/* File Info Box */}
+            <div className="w-full bg-[#1c1e26] rounded-2xl p-4 sm:p-5 flex items-center justify-between mb-6 sm:mb-7 border border-white/5">
+                <div className="flex flex-col text-left">
+                    <h3 className="text-[15px] sm:text-[16px] font-bold text-white mb-0.5">
+                        {finalFiles.length} {finalFiles.length === 1 ? 'File' : 'Files'}
+                    </h3>
+                    <span className="text-[12px] sm:text-[13px] text-zinc-500 font-semibold">
+                        {formatBytes(totalSize)} Total size
+                    </span>
                 </div>
                 <button 
                     onClick={onPreview}
-                    className="text-[14px] font-bold text-[#2b3a8c] hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                    className="text-[13px] sm:text-[14px] font-bold text-[#3b82f6] hover:text-blue-400 transition-colors"
                 >
                     Preview files
                 </button>
             </div>
 
-            {/* Footer / Buttons Section */}
-            <div className="px-5 pb-6 pt-1 flex items-center gap-3 shrink-0 relative">
-                <button className="w-12 h-12 flex items-center justify-center bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all shadow-sm">
-                    <Flag className="w-5 h-5" />
+            {/* Bottom Actions */}
+            <div className="w-full flex items-center gap-3 mt-auto">
+                <button 
+                    className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-[#1c1e26] hover:bg-zinc-800 rounded-full text-zinc-500 hover:text-red-500 transition-all border border-white/5 active:scale-95"
+                    title="Report transfer"
+                >
+                    <Flag className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
 
-                {singleVideo && !isRestricted ? (
-                    <div className="flex-1 relative">
+                <div className="flex-1 relative">
+                    {singleVideo && !isDownloadAble ? (
+                        <div className="relative w-full">
+                            <button 
+                                onClick={() => setShowQualities(!showQualities)}
+                                disabled={isPreparing}
+                                className="w-full h-12 sm:h-14 bg-[#2b3a8c] hover:bg-blue-700 text-white rounded-full font-bold text-[14px] sm:text-[16px] transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 px-6"
+                            >
+                                {isPreparing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : null}
+                                Download 
+                                <ChevronDown className="w-5 h-5" />
+                            </button>
+                            
+                            <AnimatePresence>
+                                {showQualities && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setShowQualities(false)} />
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute bottom-full left-0 right-0 mb-3 bg-[#1c1e26] rounded-2xl shadow-2xl border border-white/10 py-3 z-50 overflow-hidden"
+                                        >
+                                            <div className="px-5 py-2 border-b border-white/5 mb-1.5">
+                                                <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Select Quality</p>
+                                            </div>
+                                            <div className="max-h-60 overflow-y-auto no-scrollbar">
+                                                {[...singleVideo.qualities].sort((a,b) => b.isOriginal ? 1 : -1).map((q, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => {
+                                                            setShowQualities(false);
+                                                            onDownload(q.key);
+                                                        }}
+                                                        className="w-full text-left px-5 py-3.5 hover:bg-blue-600/20 text-[13px] sm:text-[14px] font-bold text-white flex items-center justify-between group transition-colors"
+                                                    >
+                                                        <span>{q.label}</span>
+                                                        <DownloadCloud className="w-4.5 h-4.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    ) : (
                         <button 
-                            onClick={() => setShowQualities(!showQualities)}
-                            disabled={isDownloading}
-                            className="w-full h-12 bg-[#2b3a8c] hover:bg-[#1a235a] text-white rounded-[24px] font-bold text-[15px] shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            onClick={() => onDownload()}
+                            disabled={isPreparing || isDownloadAble}
+                            className="w-full h-12 sm:h-14 bg-[#2b3a8c] hover:bg-blue-700 text-white rounded-full font-bold text-[14px] sm:text-[16px] transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-50 shadow-xl"
                         >
-                            {isDownloading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    Starting...
-                                </>
-                            ) : (
-                                <>
-                                    Download Quality
-                                    <ChevronDown className="w-5 h-5 ml-1" />
-                                </>
-                            )}
+                            {isPreparing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <DownloadCloud className="w-5 h-5" />}
+                            {isDownloadAble ? 'Restricted' : (finalFiles.length > 1 ? 'Download all' : 'Download')}
                         </button>
-
-                        {/* Dropdown Menu */}
-                        {showQualities && (
-                            <>
-                                {/* Backdrop for closing when clicking outside */}
-                                <div 
-                                    className="fixed inset-0 z-40" 
-                                    onClick={() => setShowQualities(false)} 
-                                />
-                                <div className="absolute bottom-full left-0 right-0 mb-3 bg-white dark:bg-zinc-800 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-black/50 border border-gray-100 dark:border-zinc-700 py-2 z-50 overflow-hidden transform-gpu">
-                                    <div className="px-3 pb-2 mb-2 border-b border-gray-100 dark:border-zinc-700">
-                                        <p className="text-[11px] font-bold text-gray-500 dark:text-zinc-400 px-2 uppercase tracking-wider">Select Download Quality</p>
-                                    </div>
-                                    <div className="max-h-56 overflow-y-auto no-scrollbar">
-                                        {[...singleVideo.qualities].sort((a, b) => b.isOriginal ? 1 : a.isOriginal ? -1 : 0).map((q, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => {
-                                                    setShowQualities(false);
-                                                    handleDownloadClick(q.key);
-                                                }}
-                                                className="w-full text-left px-5 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400 text-[13px] font-bold text-gray-700 dark:text-zinc-300 transition-colors flex items-center justify-between group"
-                                            >
-                                                <span>{q.label} {q.isOriginal && <span className="text-[10px] text-gray-400 ml-1 font-medium">(Original)</span>}</span>
-                                                <DownloadCloud className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                ) : (
-                    <button 
-                        onClick={handleDownloadClick}
-                        disabled={isDownloading || isRestricted}
-                        className="flex-1 h-12 bg-[#2b3a8c] hover:bg-[#1a235a] text-white rounded-[24px] font-bold text-[15px] shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {isDownloading ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                Starting...
-                            </>
-                        ) : (
-                            isRestricted ? 'Download restricted' : (finalFiles.length > 1 ? 'Download all' : 'Download')
-                        )}
-                    </button>
-                )}
+                    )}
+                </div>
             </div>
+
+            {/* Subtle glow behind everything */}
+            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-blue-600/10 blur-[100px] pointer-events-none" />
         </div>
     );
 };

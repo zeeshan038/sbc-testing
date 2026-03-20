@@ -40,6 +40,14 @@ const Login = () => {
                     // Send idToken to backend
                     const userData = await signInWithGoogle({ idToken }).unwrap();
 
+                    // Store token + display name for navbar rendering.
+                    try {
+                        if (userData?.token) window.localStorage.setItem('token', userData.token);
+                        if (userData?.user?.name) window.localStorage.setItem('name', userData.user.name);
+                    } catch {
+                        // Ignore storage errors
+                    }
+
                     dispatch(setCredentials({ ...userData }));
                     navigate('/');
                 }
@@ -73,6 +81,15 @@ const Login = () => {
 
         try {
             const userData = await login({ email, password }).unwrap();
+
+            // Store token + display name for navbar rendering.
+            try {
+                if (userData?.token) window.localStorage.setItem('token', userData.token);
+                if (userData?.user?.name) window.localStorage.setItem('name', userData.user.name);
+            } catch {
+                // Ignore storage errors
+            }
+
             dispatch(setCredentials({ ...userData }));
             navigate('/');
         } catch (err) {

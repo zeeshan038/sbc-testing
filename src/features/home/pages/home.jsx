@@ -6,12 +6,15 @@ import { Loader2 } from 'lucide-react';
 // Hooks
 import { useUpload } from '../../../shared/context/UploadContext';
 import { useGetTransferQuery, useDownloadTransferMutation } from '../api/homeApi';
+import { useLazyGetDownloadDetailsQuery } from '../api/downloadApi';
 import { useFileTransfer } from '../hooks/useFileTransfer';
+import { useDownloadTransfer } from '../hooks/useDownloadTransfer';
 
 // Components
 import SettingsModal from '../components/SettingsModal';
 import PreviewModal from '../../../shared/components/PreviewModal';
 import DownloadCard from '../components/DownloadCard';
+import DownloadingOverlay from '../components/DownloadingOverlay';
 import SuccessCard from '../components/SuccessCard';
 import TransferHeader from '../components/TransferHeader';
 import DropZone from '../components/DropZone';
@@ -57,6 +60,7 @@ const Home = ({ isNavOpen }) => {
     const addMenuRef = useRef(null);
 
     // API Mutations/Queries
+    const [getDownloadDetails] = useLazyGetDownloadDetailsQuery();
     const [downloadTransfer] = useDownloadTransferMutation();
     const { id: transferId } = useParams();
     const [searchParams] = useSearchParams();
@@ -66,6 +70,12 @@ const Home = ({ isNavOpen }) => {
         { id: transferId, preview: true },
         { skip: !transferId }
     );
+
+    const isRestrictedToDownload = isDownloadAbleFromQuery ||
+        transferData?.isDownloadAble ||
+        transferData?.transferDetails?.isDownloadAble ||
+        transferData?.downloadable ||
+        transferData?.transferDetails?.downloadable;
     console.log("Transfer Daa............", transferData)
     // Business Logic Hook
     const totalSize = uploadedFiles.reduce((acc, file) => acc + file.size, 0);
@@ -77,6 +87,7 @@ const Home = ({ isNavOpen }) => {
         totalBytes: currentTransferTotalBytes,
         generatedLink,
         setGeneratedLink,
+        newTransferId,
         handleTransfer
     } = useFileTransfer({
         uploadedFiles, setUploadedFiles,
@@ -85,27 +96,44 @@ const Home = ({ isNavOpen }) => {
         selectedMethod, selfDestruct, isDownloadAble, setMessage,
         totalSize, password
     });
+    
+    const activeTransferId = transferId || newTransferId;
+
+    useEffect(() => {
+        if (activeTransferId) {
+            getDownloadDetails(activeTransferId);
+        }
+    }, [activeTransferId, getDownloadDetails]);
+
+    const { 
+        downloads,
+        startDownload,
+        cancelDownload,
+        isSupported: isStreamSupported
+    } = useDownloadTransfer();
 
     // Event Handlers
     const handleDownload = async (key) => {
         if (!transferId) return;
 
         // Defensive check: combining all possible flag names and locations
-        const isRestricted = isDownloadAbleFromQuery ||
+        const isRestrictedToDownload = isDownloadAbleFromQuery ||
             transferData?.isDownloadAble ||
             transferData?.transferDetails?.isDownloadAble ||
             transferData?.downloadable ||
             transferData?.transferDetails?.downloadable;
 
-        if (isRestricted) {
+        if (isRestrictedToDownload) {
             alert("Download is restricted for this video.");
             return;
         }
 
         try {
             const fetchDownload = async () => {
-                const response = await downloadTransfer({ id: transferId, key }).unwrap();
+                const response = await getDownloadDetails(transferId).unwrap();
                 if (response.status) {
+                    const downloadSessionId = response.downloadSessionId;
+
                     // If multiple files, check zipStatus
                     if (response.files && response.files.length > 1) {
                         if (response.zipStatus === 'processing') {
@@ -113,24 +141,40 @@ const Home = ({ isNavOpen }) => {
                             return false; // Continue polling
                         } else if (response.zipStatus === 'ready' && response.zipUrl) {
                             setIsPreparingZip(false);
-                            window.location.href = response.zipUrl;
+                            await startDownload({ 
+                                file: {
+                                    url: response.zipUrl,
+                                    fileName: `${transferId || 'transfer'}.zip`,
+                                    size: response.transferDetails?.totalSize || 0,
+                                    key: 'zip'
+                                },
+                                transferId,
+                                downloadSessionId
+                            });
                             return true; // Stop polling
                         } else if (response.zipUrl) {
                             setIsPreparingZip(false);
-                            window.location.href = response.zipUrl;
+                            await startDownload({ 
+                                file: {
+                                    url: response.zipUrl,
+                                    fileName: `${transferId || 'transfer'}.zip`,
+                                    size: response.transferDetails?.totalSize || 0,
+                                    key: 'zip'
+                                },
+                                transferId,
+                                downloadSessionId
+                            });
                             return true;
                         }
                     } else if (response.files && response.files.length > 0) {
-                        // Single file fallback
+                        // Single file
                         setIsPreparingZip(false);
                         const file = response.files[0];
-                        const link = document.createElement('a');
-                        // Force backend to set Content-Disposition: attachment
-                        link.href = file.url;
-                        link.download = file.fileName || 'download';
-                        document.body.appendChild(link);
-                        link.click();
-                        link.remove();
+                        await startDownload({ 
+                            file,
+                            transferId,
+                            downloadSessionId
+                        });
                         return true;
                     }
                 }
@@ -215,7 +259,7 @@ const Home = ({ isNavOpen }) => {
                     initial={isMobile ? false : { opacity: 0, y: 100 }}
                     animate={{ opacity: 1, y: isNavOpen ? 280 : 0 }}
                     transition={{ duration: 0.6, type: "spring", bounce: 0.2 }}
-                    className={`w-full max-w-[300px] bg-[#12141a] shadow-2xl flex flex-col pointer-events-auto relative z-20 transition-all duration-500 max-h-[85vh] sm:max-h-[520px] overflow-y-auto overflow-x-hidden rounded-[24px] border border-white/5 ${isSettingsOpen ? 'sm:rounded-l-[24px] sm:rounded-r-none' : 'sm:rounded-[24px]'}`}
+                    className={`w-full max-w-[320px] sm:max-w-[330px] bg-[#12141a] shadow-2xl flex flex-col pointer-events-auto relative z-20 transition-all duration-500 max-h-[85vh] sm:max-h-[560px] overflow-y-auto overflow-x-hidden rounded-[24px] border border-white/5 ${isSettingsOpen ? 'sm:rounded-l-[24px] sm:rounded-r-none' : 'sm:rounded-[24px]'}`}
                 >
                     <input
                         ref={fileInputRef}
@@ -238,14 +282,28 @@ const Home = ({ isNavOpen }) => {
                     />
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
-                    {transferId ? (
-                        <DownloadCard
-                            transferData={transferData}
-                            isFetchingTransfer={isFetchingTransfer}
-                            onPreview={() => setIsPreviewOpen(true)}
-                            onDownload={handleDownload}
-                            isDownloadAble={isDownloadAbleFromQuery || transferData?.transferDetails?.isDownloadAble || transferData?.isDownloadAble || transferData?.transferDetails?.downloadable || transferData?.downloadable}
-                        />
+                    {activeTransferId ? (
+                        <>
+                            <DownloadCard
+                                transferData={transferData}
+                                isFetchingTransfer={isFetchingTransfer}
+                                onPreview={() => setIsPreviewOpen(true)}
+                                onDownload={handleDownload}
+                                isDownloadAble={isRestrictedToDownload}
+                            />
+                            
+                            {/* Aggregated Downloading Overlay */}
+                            {Object.values(downloads).some(d => d.status === 'downloading' || d.status === 'preparing') && (
+                                <DownloadingOverlay
+                                    isOpen={true}
+                                    {...Object.values(downloads).find(d => d.status === 'downloading' || d.status === 'preparing')}
+                                    onCancel={() => {
+                                        const activeId = Object.keys(downloads).find(id => downloads[id].status === 'downloading' || downloads[id].status === 'preparing');
+                                        if (activeId) cancelDownload(activeId);
+                                    }}
+                                />
+                            )}
+                        </>
                     ) : generatedLink ? (
                         <SuccessCard
                             shareLink={generatedLink}
@@ -371,7 +429,7 @@ const Home = ({ isNavOpen }) => {
                 totalSizeOverride={transferId && transferData ? (transferData.transferDetails?.totalSize || transferData.totalSize) : null}
                 onPreview={handlePreview}
                 onDownload={transferId ? handleDownload : null}
-                isDownloadAble={transferId && (isDownloadAbleFromQuery || transferData?.transferDetails?.isDownloadAble || transferData?.isDownloadAble || transferData?.transferDetails?.downloadable || transferData?.downloadable)}
+                isDownloadAble={transferId && isRestrictedToDownload}
             />
 
             {/* Polling/Processing Overlay */}

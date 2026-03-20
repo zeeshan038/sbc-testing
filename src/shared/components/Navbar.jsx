@@ -4,15 +4,16 @@ import { Menu, X, ChevronDown, LogOut, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { selectCurrentUser, selectIsAuthenticated, logOut } from '../../store/authSlice';
+import { selectCurrentUser, logOut } from '../../store/authSlice';
 import logo from '../../assets/logo5.jpeg';
 
-const navItems = [
-    { name: "My Account", path: "/my-account" },
+const navItemsPublic = [
     { name: "Terms of service", path: "/terms" },
     { name: "About Us", path: "/about" },
     { name: "Contact Us", path: "/contact" },
 ];
+
+const navItemMyAccount = { name: "My Account", path: "/my-account" };
 
 const Navbar = ({ onMenuToggle }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,7 +24,34 @@ const Navbar = ({ onMenuToggle }) => {
     const navigate = useNavigate();
     
     const currentUser = useSelector(selectCurrentUser);
-    const isAuthenticated = useSelector(selectIsAuthenticated);
+
+    const tokenFromLocalStorageKey =
+        typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
+    const nameFromLocalStorageKey =
+        typeof window !== 'undefined' ? window.localStorage.getItem('name') : null;
+
+    const getPersistedAuthState = () => {
+        const candidateKeys = ['persist:root', 'root'];
+        for (const key of candidateKeys) {
+            const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+            if (!raw) continue;
+            try {
+                const parsed = JSON.parse(raw);
+                // Persisted shape is typically { auth: { ... } }
+                const authState = parsed?.auth ?? parsed;
+                if (authState && typeof authState === 'object') return authState;
+            } catch {
+                // Ignore malformed JSON
+            }
+        }
+        return null;
+    };
+
+    const persistedAuth = getPersistedAuthState();
+    const hasTokenInLocalStorage = Boolean(tokenFromLocalStorageKey) || Boolean(persistedAuth?.token);
+
+    // Hide "My Account" from the navbar when the persisted auth token is missing.
+    const navItems = hasTokenInLocalStorage ? [navItemMyAccount, ...navItemsPublic] : navItemsPublic;
 
     useEffect(() => {
         setIsMenuOpen(false);
@@ -38,6 +66,16 @@ const Navbar = ({ onMenuToggle }) => {
     };
 
     const handleLogout = () => {
+        // Clear persisted auth token so navbar state updates immediately.
+        try {
+            window.localStorage.removeItem('persist:root');
+            window.localStorage.removeItem('root');
+            window.localStorage.removeItem('token');
+            window.localStorage.removeItem('name');
+        } catch {
+            // Ignore storage errors
+        }
+
         dispatch(logOut());
         navigate('/login');
     };
@@ -91,7 +129,7 @@ const Navbar = ({ onMenuToggle }) => {
                     </div>
 
                     {/* Mobile/Desktop Conditional Auth */}
-                    {!isAuthenticated ? (
+                    {!hasTokenInLocalStorage ? (
                         <>
                             <Link
                                 to="/register"
@@ -121,7 +159,7 @@ const Navbar = ({ onMenuToggle }) => {
                                     <UserIcon className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
                                 </div>
                                 <span className="text-[12px] lg:text-[14px] font-black text-[#1e2a6a] dark:text-white">
-                                    {currentUser?.name || 'User'}
+                                    {nameFromLocalStorageKey || currentUser?.name || 'User'}
                                 </span>
                                 <ChevronDown className={`w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-400 transition-transform duration-300 ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
                             </div>
@@ -137,7 +175,9 @@ const Navbar = ({ onMenuToggle }) => {
                                     >
                                         <div className="p-4 border-b border-gray-50 dark:border-zinc-800">
                                             <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Signed in as</p>
-                                            <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">{currentUser?.email}</p>
+                                            <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">
+                                                {currentUser?.email || nameFromLocalStorageKey || 'User'}
+                                            </p>
                                         </div>
                                         <div className="p-1.5">
                                             <button 
@@ -185,7 +225,7 @@ const Navbar = ({ onMenuToggle }) => {
                                         <div className="mx-6 h-[1px] bg-gray-100/80 dark:bg-zinc-800/50" />
                                     </div>
                                 ))}
-                                {!isAuthenticated ? (
+                                {!hasTokenInLocalStorage ? (
                                     <Link
                                         to="/login"
                                         className="flex items-center px-6 py-5 text-zinc-800 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
@@ -196,7 +236,9 @@ const Navbar = ({ onMenuToggle }) => {
                                     <div className="flex flex-col">
                                         <div className="px-6 py-4 bg-gray-50/50 dark:bg-white/5">
                                             <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">Signed in as</p>
-                                            <p className="text-[15px] font-bold text-zinc-900 dark:text-white truncate">{currentUser?.email}</p>
+                                            <p className="text-[15px] font-bold text-zinc-900 dark:text-white truncate">
+                                                    {currentUser?.email || nameFromLocalStorageKey || 'User'}
+                                            </p>
                                         </div>
                                         <button
                                             onClick={handleLogout}
