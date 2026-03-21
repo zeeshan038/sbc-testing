@@ -1,9 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
 import { downloadToDisk } from '../../../shared/services/downloadToDisk';
+import { downloadToDiskMultipart } from '../../../shared/services/downloadToDiskMultipart';
 import { 
   useStartDownloadSessionMutation, 
   useCompleteDownloadSessionMutation, 
-  useCancelDownloadSessionMutation 
+  useCancelDownloadSessionMutation,
+  useDownloadPartMutation
 } from '../api/downloadApi';
 
 /**
@@ -18,6 +20,7 @@ export function useDownloadTransfer() {
     const [startSession] = useStartDownloadSessionMutation();
     const [completeSession] = useCompleteDownloadSessionMutation();
     const [cancelSession] = useCancelDownloadSessionMutation();
+    const [downloadPart] = useDownloadPartMutation();
 
     const updateDownloadState = useCallback((fileId, newState) => {
         setDownloads(prev => ({
@@ -29,7 +32,7 @@ export function useDownloadTransfer() {
         }));
     }, []);
 
-    const startDownload = async ({ file, transferId, downloadSessionId }) => {
+    const startDownload = async ({ file, transferId, downloadSessionId, password }) => {
         const fileId = file.objectKey || file.key || Math.random().toString(36).substr(2, 9);
         
         // 1. Create local download state row
@@ -55,26 +58,44 @@ export function useDownloadTransfer() {
             updateDownloadState(fileId, { status: 'preparing' });
             await startSession({ id: transferId, downloadSessionId }).unwrap();
 
-            // 3. Start direct-to-disk streaming
-            const result = await downloadToDisk({
-                url: file.url,
-                fileName: file.fileName || file.name,
-                signal: controller.signal,
-                onProgress: ({ downloadedBytes, totalBytes, progress, speedBytesPerSecond }) => {
-                    const etaSeconds = speedBytesPerSecond > 0 ? (totalBytes - downloadedBytes) / speedBytesPerSecond : 0;
-                    
-                    updateDownloadState(fileId, {
-                        downloadedBytes,
-                        progress, // Already 0-100
-                        speed: speedBytesPerSecond,
-                        etaSeconds,
-                        status: 'downloading'
-                    });
-                }
-            });
+            // 3. Start download (Multipart for large files, otherwise single-stream)
+            const isLargeFile = (file.size || 0) > 5242880; // 5MB
+            let result;
+
+            const progressHandler = ({ downloadedBytes, totalBytes, progress, speedBytesPerSecond }) => {
+                const etaSeconds = speedBytesPerSecond > 0 ? (totalBytes - downloadedBytes) / speedBytesPerSecond : 0;
+                
+                updateDownloadState(fileId, {
+                    downloadedBytes,
+                    progress, // Already 0-100
+                    speed: speedBytesPerSecond,
+                    etaSeconds,
+                    status: 'downloading'
+                });
+            };
+
+            if (isLargeFile) {
+                console.log(`useDownloadTransfer: Using multipart download for ${file.fileName || file.name}`);
+                result = await downloadToDiskMultipart({
+                    shortId: transferId,
+                    file,
+                    password,
+                    signal: controller.signal,
+                    downloadPart,
+                    onProgress: progressHandler
+                });
+            } else {
+                console.log(`useDownloadTransfer: Using standard download for ${file.fileName || file.name}`);
+                result = await downloadToDisk({
+                    url: file.url,
+                    fileName: file.fileName || file.name,
+                    signal: controller.signal,
+                    onProgress: progressHandler
+                });
+            }
 
             // 4. Notify backend: complete
-            if (result.method === 'streamed' || result.method === 'fallback') {
+            if (result.method === 'streamed' || result.method === 'fallback' || result.method === 'multipart') {
                 await completeSession({ id: transferId, downloadSessionId }).unwrap();
                 updateDownloadState(fileId, { status: 'completed', progress: 100 });
             }

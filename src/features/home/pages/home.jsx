@@ -149,7 +149,8 @@ const Home = ({ isNavOpen }) => {
                                     key: 'zip'
                                 },
                                 transferId,
-                                downloadSessionId
+                                downloadSessionId,
+                                password
                             });
                             return true; // Stop polling
                         } else if (response.zipUrl) {
@@ -162,7 +163,8 @@ const Home = ({ isNavOpen }) => {
                                     key: 'zip'
                                 },
                                 transferId,
-                                downloadSessionId
+                                downloadSessionId,
+                                password
                             });
                             return true;
                         }
@@ -173,7 +175,8 @@ const Home = ({ isNavOpen }) => {
                         await startDownload({ 
                             file,
                             transferId,
-                            downloadSessionId
+                            downloadSessionId,
+                            password
                         });
                         return true;
                     }

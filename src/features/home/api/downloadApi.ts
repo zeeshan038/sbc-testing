@@ -30,6 +30,13 @@ const downloadApi = baseApi.injectEndpoints({
                 body: { downloadSessionId },
             }),
         }),
+        downloadPart: builder.mutation({
+            query: ({ id, key, partNumber, partSize, password }) => ({
+                url: `${download_url}/download-part/${id}`,
+                method: 'POST',
+                body: { key, partNumber, partSize, password },
+            }),
+        }),
     }),
 });
 
@@ -39,4 +46,5 @@ export const {
     useStartDownloadSessionMutation,
     useCompleteDownloadSessionMutation,
     useCancelDownloadSessionMutation,
+    useDownloadPartMutation
 } = downloadApi;
