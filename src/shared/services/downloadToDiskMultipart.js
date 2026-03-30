@@ -1,5 +1,6 @@
 /**
- * Multipart download utility to fetch files in parallel chunks.
+ * High-Performance Multipart download utility.
+ * Uses a "Sign-Ahead" URL pump and 10 parallel workers to saturate bandwidth.
  */
 export async function downloadToDiskMultipart({
     shortId,
@@ -7,115 +8,160 @@ export async function downloadToDiskMultipart({
     password,
     onProgress,
     signal,
-    downloadPart // This is the mutation trigger function
+    downloadPart
 }) {
-    const PART_SIZE = 5242880; // 5MB
+    const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB Chunks
     const totalSize = file.size || 0;
     const fileName = file.fileName || file.name || 'download';
-
-    if (totalSize === 0) {
-        throw new Error("File size is 0 or unknown.");
-    }
-
-    const numParts = Math.ceil(totalSize / PART_SIZE);
-    const chunks = new Array(numParts);
+    const numChunks = Math.ceil(totalSize / CHUNK_SIZE);
+    
+    // 1. Initialize State
+    const chunks = new Array(numChunks);
     let downloadedBytes = 0;
-    const startTime = performance.now();
+    
+    // Performance Tracking (8s rolling window)
+    const samples = [];
+    const WINDOW_MS = 8000;
 
-    const fetchPart = async (partIdx) => {
+    /**
+     * Lookahead URL Pump: Pre-signs URLs so workers are never idle.
+     */
+    const createUrlPump = (concurrency) => {
+        const URL_AHEAD = Math.min(numChunks, concurrency + 4);
+        const resolvers = Array.from({ length: numChunks }, () => {
+            let resolve, reject;
+            const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+            return { promise, resolve, reject };
+        });
+
+        let pumpIdx = 0;
+        let pumpActiveCount = 0;
+
+        const pump = () => {
+            while (pumpActiveCount < URL_AHEAD && pumpIdx < numChunks) {
+                const idx = pumpIdx++;
+                const partNumber = idx + 1;
+                const start = idx * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, totalSize);
+
+                pumpActiveCount++;
+                downloadPart({
+                    id: shortId,
+                    key: file.objectKey || file.key || file.fileKey,
+                    partNumber,
+                    partSize: end - start,
+                    password
+                }).unwrap()
+                  .then(res => resolvers[idx].resolve(res))
+                  .catch(err => resolvers[idx].reject(err))
+                  .finally(() => {
+                      pumpActiveCount--;
+                      pump();
+                  });
+            }
+        };
+
+        const refreshUrl = (idx) => {
+            let res, rej;
+            const p = new Promise((r, j) => { res = r; rej = j; });
+            resolvers[idx] = { promise: p, resolve: res, reject: rej };
+            pumpActiveCount++;
+            const partNumber = idx + 1;
+            const start = idx * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, totalSize);
+            downloadPart({
+                id: shortId,
+                key: file.objectKey || file.key || file.fileKey,
+                partNumber,
+                partSize: end - start,
+                password
+            }).unwrap()
+              .then(res => res)
+              .then(res => res(res.url))
+              .catch(rej)
+              .finally(() => { pumpActiveCount--; pump(); });
+        };
+
+        pump(); // Start Immediately
+        return { resolvers, pump, refreshUrl };
+    };
+
+    const CONCURRENCY = 10;
+    const { resolvers, pump, refreshUrl } = createUrlPump(CONCURRENCY);
+
+    // 2. Fetcher Worker
+    const fetchChunk = async (idx, retryCount = 0) => {
         if (signal?.aborted) return;
 
-        const start = partIdx * PART_SIZE;
-        const end = Math.min(start + PART_SIZE, totalSize);
-        const actualPartSize = end - start;
+        try {
+            const { url, range } = await resolvers[idx].promise;
+            pump(); // Refill pump
 
-        // 1. Get signed URL for this part from the backend
-        const response = await downloadPart({
-            id: shortId,
-            key: file.objectKey || file.key || file.fileKey,
-            partNumber: partIdx + 1,
-            partSize: actualPartSize,
-            password
-        }).unwrap();
-
-        if (!response.status || !response.url) {
-            throw new Error(`Failed to get URL for part ${partIdx + 1}`);
-        }
-
-        // 2. Fetch the actual data from the signed URL
-        const fetchOptions = { signal };
-        if (response.range) {
-            fetchOptions.headers = {
-                'Range': `bytes=${response.range.start}-${response.range.end}`
-            };
-        }
-
-        const partResponse = await fetch(response.url, fetchOptions);
-        if (!partResponse.ok) {
-            throw new Error(`Failed to fetch part ${partIdx + 1} from storage`);
-        }
-
-        const partBlob = await partResponse.blob();
-        chunks[partIdx] = partBlob;
-        downloadedBytes += partBlob.size;
-
-        // 3. Update progress
-        if (onProgress) {
-            const elapsed = (performance.now() - startTime) / 1000;
-            const speed = elapsed > 0 ? downloadedBytes / elapsed : 0;
-            onProgress({
-                downloadedBytes,
-                totalBytes: totalSize,
-                progress: (downloadedBytes / totalSize) * 100,
-                speedBytesPerSecond: speed
-            });
-        }
-    };
-
-    // Parallel fetching with limit (3-5 simultaneous requests)
-    const CONCURRENCY_LIMIT = 3;
-    const queue = Array.from({ length: numParts }, (_, i) => i);
-
-    const worker = async () => {
-        while (queue.length > 0 && !signal?.aborted) {
-            const partIdx = queue.shift();
-            try {
-                await fetchPart(partIdx);
-            } catch (err) {
-                if (err.name === 'AbortError') throw err;
-                throw err;
+            const fetchOptions = { signal };
+            if (range) {
+                fetchOptions.headers = { 'Range': `bytes=${range.start}-${range.end}` };
             }
+
+            const response = await fetch(url, fetchOptions);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const blob = await response.blob();
+            chunks[idx] = blob;
+            downloadedBytes += blob.size;
+
+            // Update smoothed speed
+            const now = performance.now();
+            samples.push({ time: now, bytes: downloadedBytes });
+            while (samples.length > 0 && now - samples[0].time > WINDOW_MS) samples.shift();
+            
+            const first = samples[0];
+            const last = samples[samples.length - 1];
+            const dt = (last.time - first.time) / 1000;
+            const smoothedSpeed = dt > 0 ? (last.bytes - first.bytes) / dt : 0;
+
+            if (onProgress) {
+                onProgress({
+                    downloadedBytes,
+                    totalBytes: totalSize,
+                    progress: (downloadedBytes / totalSize) * 100,
+                    speedBytesPerSecond: Math.round(smoothedSpeed)
+                });
+            }
+        } catch (err) {
+            if (err.name === 'AbortError') throw err;
+            if (retryCount < 3) {
+                console.warn(`Retry chunk ${idx}, attempt ${retryCount + 1}`);
+                return fetchChunk(idx, retryCount + 1);
+            }
+            throw err;
         }
     };
 
-    // Start workers
-    const workers = Array.from(
-        { length: Math.min(CONCURRENCY_LIMIT, numParts) },
-        () => worker()
-    );
+    // 3. Worker Pool Management
+    const queue = Array.from({ length: numChunks }, (_, i) => i);
+    const worker = async (staggerMs = 0) => {
+        if (staggerMs > 0) await new Promise(r => setTimeout(r, staggerMs));
+        while (queue.length > 0 && !signal?.aborted) {
+            const idx = queue.shift();
+            await fetchChunk(idx);
+        }
+    };
 
+    const workers = Array.from({ length: Math.min(CONCURRENCY, numChunks) }, (_, i) => worker(i * 30));
     await Promise.all(workers);
 
-    if (signal?.aborted) {
-        const abortErr = new Error('Download aborted');
-        abortErr.name = 'AbortError';
-        throw abortErr;
-    }
+    if (signal?.aborted) throw new Error("Download aborted");
 
     // 4. Assemble and Save
     const finalBlob = new Blob(chunks, { type: file.contentType || 'application/octet-stream' });
     const blobUrl = URL.createObjectURL(finalBlob);
-
     const link = document.createElement('a');
     link.href = blobUrl;
     link.download = fileName;
-    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    // Cleanup
     setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 
-    return { success: true, method: 'multipart' };
+    return { success: true };
 }
