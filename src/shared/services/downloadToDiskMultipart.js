@@ -76,8 +76,7 @@ export async function downloadToDiskMultipart({
                 partSize: end - start,
                 password
             }).unwrap()
-              .then(res => res)
-              .then(res => res(res.url))
+              .then(resp => resolvers[idx].resolve(resp))
               .catch(rej)
               .finally(() => { pumpActiveCount--; pump(); });
         };
@@ -97,7 +96,11 @@ export async function downloadToDiskMultipart({
             const { url, range } = await resolvers[idx].promise;
             pump(); // Refill pump
 
-            const fetchOptions = { signal };
+            const fetchOptions = {
+                method: 'GET',
+                signal
+            };
+            
             if (range) {
                 fetchOptions.headers = { 'Range': `bytes=${range.start}-${range.end}` };
             }

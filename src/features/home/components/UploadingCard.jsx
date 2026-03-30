@@ -1,3 +1,5 @@
+import React from 'react';
+import { motion } from 'framer-motion';
 import { formatSpeed } from '../../../shared/utils/formatTransfer';
 
 const UploadingCard = ({ uploadProgress, uploadSpeed, uploadedBytes, totalBytes, formatBytes }) => {
