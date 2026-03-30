@@ -35,7 +35,6 @@ export function useStreamDownload() {
     abortRef.current = controller;
 
     try {
-      // Notify backend that download has started
       await startSession({ id: transferId, downloadSessionId }).unwrap();
 
       const result = await streamDownloadToDisk({
@@ -55,17 +54,14 @@ export function useStreamDownload() {
         }
       });
 
-      // Notify backend that download is complete
       await completeSession({ id: transferId, downloadSessionId }).unwrap();
 
       return result;
     } catch (error) {
       if (error.name === 'AbortError') {
-        // Notify backend that download was cancelled
         await cancelSession({ id: transferId, downloadSessionId }).unwrap();
       } else {
         setDownloadError(error.message || 'Download failed');
-        // Also notify backend of cancellation/failure
         try {
           await cancelSession({ id: transferId, downloadSessionId }).unwrap();
         } catch (_) {}

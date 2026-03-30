@@ -12,7 +12,7 @@ export async function downloadToDiskMultipart({
     const PART_SIZE = 5242880; // 5MB
     const totalSize = file.size || 0;
     const fileName = file.fileName || file.name || 'download';
-    
+
     if (totalSize === 0) {
         throw new Error("File size is 0 or unknown.");
     }
@@ -75,7 +75,7 @@ export async function downloadToDiskMultipart({
     // Parallel fetching with limit (3-5 simultaneous requests)
     const CONCURRENCY_LIMIT = 3;
     const queue = Array.from({ length: numParts }, (_, i) => i);
-    
+
     const worker = async () => {
         while (queue.length > 0 && !signal?.aborted) {
             const partIdx = queue.shift();
@@ -90,7 +90,7 @@ export async function downloadToDiskMultipart({
 
     // Start workers
     const workers = Array.from(
-        { length: Math.min(CONCURRENCY_LIMIT, numParts) }, 
+        { length: Math.min(CONCURRENCY_LIMIT, numParts) },
         () => worker()
     );
 
@@ -105,7 +105,7 @@ export async function downloadToDiskMultipart({
     // 4. Assemble and Save
     const finalBlob = new Blob(chunks, { type: file.contentType || 'application/octet-stream' });
     const blobUrl = URL.createObjectURL(finalBlob);
-    
+
     const link = document.createElement('a');
     link.href = blobUrl;
     link.download = fileName;

@@ -1,11 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
 import { downloadToDisk } from '../../../shared/services/downloadToDisk';
 import { downloadToDiskMultipart } from '../../../shared/services/downloadToDiskMultipart';
-import { 
-  useStartDownloadSessionMutation, 
-  useCompleteDownloadSessionMutation, 
-  useCancelDownloadSessionMutation,
-  useDownloadPartMutation
+import {
+    useStartDownloadSessionMutation,
+    useCompleteDownloadSessionMutation,
+    useCancelDownloadSessionMutation,
+    useDownloadPartMutation
 } from '../api/downloadApi';
 
 /**
@@ -15,7 +15,7 @@ import {
 export function useDownloadTransfer() {
     const [downloads, setDownloads] = useState({});
     const controllersRef = useRef({});
-    
+
     // API Mutations
     const [startSession] = useStartDownloadSessionMutation();
     const [completeSession] = useCompleteDownloadSessionMutation();
@@ -34,7 +34,7 @@ export function useDownloadTransfer() {
 
     const startDownload = async ({ file, transferId, downloadSessionId, password }) => {
         const fileId = file.objectKey || file.key || Math.random().toString(36).substr(2, 9);
-        
+
         // 1. Create local download state row
         setDownloads(prev => ({
             ...prev,
@@ -64,7 +64,7 @@ export function useDownloadTransfer() {
 
             const progressHandler = ({ downloadedBytes, totalBytes, progress, speedBytesPerSecond }) => {
                 const etaSeconds = speedBytesPerSecond > 0 ? (totalBytes - downloadedBytes) / speedBytesPerSecond : 0;
-                
+
                 updateDownloadState(fileId, {
                     downloadedBytes,
                     progress, // Already 0-100
@@ -106,13 +106,13 @@ export function useDownloadTransfer() {
                 updateDownloadState(fileId, { status: 'cancelled' });
                 try {
                     await cancelSession({ id: transferId, downloadSessionId }).unwrap();
-                } catch (_) {}
+                } catch (_) { }
             } else {
                 console.error(`Download error for ${fileId}:`, error);
                 updateDownloadState(fileId, { status: 'failed', error: error.message });
                 try {
                     await cancelSession({ id: transferId, downloadSessionId }).unwrap();
-                } catch (_) {}
+                } catch (_) { }
             }
         } finally {
             delete controllersRef.current[fileId];

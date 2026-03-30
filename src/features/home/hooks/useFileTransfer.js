@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
     useInitiateMultipartMutation,
     useGetPartUrlMutation,
@@ -6,6 +6,7 @@ import {
     useFinalizeTransferMutation,
     useSpeedTestMutation
 } from '../api/homeApi';
+
 
 export const useFileTransfer = ({
     uploadedFiles,
@@ -34,18 +35,28 @@ export const useFileTransfer = ({
     const [completeMultipart] = useCompleteMultipartMutation();
     const [finalizeTransfer] = useFinalizeTransferMutation();
     const [speedTest] = useSpeedTestMutation();
-    
-    // ... (measureUploadSpeed and uploadFilePart remain unchanged)
-    
-    // (I will use multi_replace if needed, but for now I'm just showing the logic)
 
-    // Kept for optional UI/debug use, but actual upload uses local values returned by measureUploadSpeed
-    const [chunkSize, setChunkSize] = useState(20 * 1024 * 1024);
-    const [concurrencyLimit, setConcurrencyLimit] = useState(4);
+    // Use refs for values that change rapidly to avoid unnecessary React work
+    const uploadedBytesRef = useRef(0);
+    const startTimeRef = useRef(0);
+    const lastUpdateRef = useRef(0);
+    const speedSamplesRef = useRef([]);
+
+    const isMobile =
+        typeof window !== 'undefined' ? window.innerWidth < 640 : false;
+
+    const [chunkSize, setChunkSize] = useState(
+        isMobile ? 5 * 1024 * 1024 : 20 * 1024 * 1024
+    );
+    const [concurrencyLimit, setConcurrencyLimit] = useState(
+        isMobile ? 2 : 6
+    );
+
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
     const measureUploadSpeed = async () => {
         try {
-            const testSize = 10 * 1024 * 1024; // 10MB
+            const testSize = 512 * 1024;
             const testData = new Uint8Array(testSize);
             const startTime = performance.now();
 
@@ -57,47 +68,43 @@ export const useFileTransfer = ({
             const duration = (performance.now() - startTime) / 1000;
             const speedBps = testSize / duration;
 
-            let nextChunkSize = 20 * 1024 * 1024;
-            let nextConcurrencyLimit = 4;
+            // If Cloudflare multipart follows S3-compatible minimum part size
+            const MIN_CHUNK = 5 * 1024 * 1024;
+            const MAX_CHUNK = isMobile ? 8 * 1024 * 1024 : 20 * 1024 * 1024;
 
-            if (speedBps < 1 * 1024 * 1024) {
-                nextChunkSize = 5 * 1024 * 1024;
-                nextConcurrencyLimit = 2;
-            } else if (speedBps < 5 * 1024 * 1024) {
-                nextChunkSize = 10 * 1024 * 1024;
-                nextConcurrencyLimit = 3;
-            } else if (speedBps < 10 * 1024 * 1024) {
-                nextChunkSize = 20 * 1024 * 1024;
-                nextConcurrencyLimit = 4;
-            } else {
-                nextChunkSize = 40 * 1024 * 1024;
-                nextConcurrencyLimit = 6;
-            }
+            // Your rule: speed / 5
+            const calculatedChunk = speedBps / 5;
 
-            // Optional: keep state updated for UI/debugging
+            const nextChunkSize = Math.round(
+                clamp(calculatedChunk, MIN_CHUNK, MAX_CHUNK)
+            );
+
+            let nextLimit;
+            if (speedBps < 2 * 1024 * 1024) nextLimit = 2;
+            else if (speedBps < 5 * 1024 * 1024) nextLimit = 3;
+            else if (speedBps < 10 * 1024 * 1024) nextLimit = 4;
+            else nextLimit = isMobile ? 4 : 5;
+
             setChunkSize(nextChunkSize);
-            setConcurrencyLimit(nextConcurrencyLimit);
+            setConcurrencyLimit(nextLimit);
 
             return {
                 speedBps,
                 chunkSize: nextChunkSize,
-                concurrencyLimit: nextConcurrencyLimit
+                concurrencyLimit: nextLimit
             };
-        } catch (error) {
-            console.warn('Speed test failed, using defaults', error);
-
+        } catch {
             const fallback = {
                 speedBps: null,
-                chunkSize: 20 * 1024 * 1024,
-                concurrencyLimit: 4
+                chunkSize: 5 * 1024 * 1024,
+                concurrencyLimit: isMobile ? 2 : 4
             };
 
             setChunkSize(fallback.chunkSize);
             setConcurrencyLimit(fallback.concurrencyLimit);
-
             return fallback;
         }
-    };
+    };;
 
     const uploadFilePart = async (
         file,
@@ -105,71 +112,49 @@ export const useFileTransfer = ({
         key,
         partNumber,
         activeChunkSize,
-        onProgress,
+        onProgressDelta,
         retryCount = 0
     ) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const start = (partNumber - 1) * activeChunkSize;
-                const end = Math.min(start + activeChunkSize, file.size);
-                const chunk = file.slice(start, end);
+        const start = (partNumber - 1) * activeChunkSize;
+        const end = Math.min(start + activeChunkSize, file.size);
+        const chunk = file.slice(start, end);
 
-                const { url } = await getPartUrl({ uploadId, key, partNumber }).unwrap();
+        const { url } = await getPartUrl({ uploadId, key, partNumber }).unwrap();
 
-                const xhr = new XMLHttpRequest();
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            let lastLoaded = 0;
+            let committedBytes = 0;
 
-                xhr.upload.addEventListener('progress', (event) => {
-                    if (event.lengthComputable) {
-                        onProgress(event.loaded);
+            xhr.upload.addEventListener('progress', (event) => {
+                if (!event.lengthComputable) return;
+
+                const delta = event.loaded - lastLoaded;
+                lastLoaded = event.loaded;
+
+                committedBytes += delta;
+                onProgressDelta(delta);
+            });
+
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState !== 4) return;
+
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const etag = xhr.getResponseHeader('ETag');
+                    if (!etag) {
+                        reject(new Error(`No ETag found for part ${partNumber}`));
+                        return;
                     }
-                });
 
-                xhr.onreadystatechange = () => {
-                    if (xhr.readyState !== 4) return;
+                    resolve({
+                        PartNumber: partNumber,
+                        ETag: etag.replace(/"/g, '')
+                    });
+                } else {
+                    // rollback bytes counted for this failed attempt
+                    if (committedBytes > 0) onProgressDelta(-committedBytes);
 
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        const etag = xhr.getResponseHeader('ETag');
-
-                        if (!etag) {
-                            reject(new Error(`No ETag found for part ${partNumber}`));
-                            return;
-                        }
-
-                        resolve({
-                            PartNumber: partNumber,
-                            ETag: etag.replace(/"/g, '')
-                        });
-                    } else {
-                        if (retryCount < 3) {
-                            console.warn(
-                                `Retrying part ${partNumber} for ${file.name} (Attempt ${retryCount + 1})`
-                            );
-                            resolve(
-                                uploadFilePart(
-                                    file,
-                                    uploadId,
-                                    key,
-                                    partNumber,
-                                    activeChunkSize,
-                                    onProgress,
-                                    retryCount + 1
-                                )
-                            );
-                        } else {
-                            reject(
-                                new Error(
-                                    `Failed to upload part ${partNumber} with status ${xhr.status}`
-                                )
-                            );
-                        }
-                    }
-                };
-
-                xhr.onerror = () => {
                     if (retryCount < 3) {
-                        console.warn(
-                            `Retrying part ${partNumber} for ${file.name} (Attempt ${retryCount + 1})`
-                        );
                         resolve(
                             uploadFilePart(
                                 file,
@@ -177,22 +162,20 @@ export const useFileTransfer = ({
                                 key,
                                 partNumber,
                                 activeChunkSize,
-                                onProgress,
+                                onProgressDelta,
                                 retryCount + 1
                             )
                         );
                     } else {
-                        reject(new Error(`Network error during part ${partNumber} upload`));
+                        reject(new Error(`Status ${xhr.status}`));
                     }
-                };
+                }
+            };
 
-                xhr.open('PUT', url);
-                xhr.send(chunk);
-            } catch (error) {
+            xhr.onerror = () => {
+                if (committedBytes > 0) onProgressDelta(-committedBytes);
+
                 if (retryCount < 3) {
-                    console.warn(
-                        `Retrying part ${partNumber} for ${file.name} (Attempt ${retryCount + 1})`
-                    );
                     resolve(
                         uploadFilePart(
                             file,
@@ -200,23 +183,24 @@ export const useFileTransfer = ({
                             key,
                             partNumber,
                             activeChunkSize,
-                            onProgress,
+                            onProgressDelta,
                             retryCount + 1
                         )
                     );
                 } else {
-                    reject(error);
+                    reject(new Error('Network error'));
                 }
-            }
+            };
+
+            xhr.open('PUT', url);
+            xhr.send(chunk);
         });
     };
 
-    const processFile = async (
-        file,
-        onProgressUpdate,
-        activeChunkSize,
-        activeConcurrencyLimit
-    ) => {
+    /**
+     * Process a single file: Multipart initiation + concurrent part uploads.
+     */
+    const processFile = async (file, onProgressDelta, activeChunkSize, activeConcurrencyLimit) => {
         const { uploadId, key } = await initiateMultipart({
             fileName: file.name,
             fileType: file.type
@@ -224,20 +208,11 @@ export const useFileTransfer = ({
 
         const totalParts = Math.ceil(file.size / activeChunkSize);
         const parts = [];
-        const partProgressMap = new Map();
         const queue = Array.from({ length: totalParts }, (_, i) => i + 1);
         let activeParts = 0;
         let isRejected = false;
 
         return new Promise((resolve, reject) => {
-            const calculateTotalProgress = () => {
-                const totalUploadedForFile = Array.from(partProgressMap.values()).reduce(
-                    (a, b) => a + b,
-                    0
-                );
-                onProgressUpdate(totalUploadedForFile / file.size);
-            };
-
             const failOnce = (err) => {
                 if (isRejected) return;
                 isRejected = true;
@@ -249,60 +224,22 @@ export const useFileTransfer = ({
 
                 if (queue.length === 0 && activeParts === 0) {
                     try {
-                        const sortedParts = [...parts].sort(
-                            (a, b) => a.PartNumber - b.PartNumber
-                        );
-
-                        await completeMultipart({
-                            uploadId,
-                            key,
-                            parts: sortedParts
-                        }).unwrap();
-
-                        resolve({
-                            fileName: file.name,
-                            key,
-                            size: file.size
-                        });
+                        const sortedParts = [...parts].sort((a, b) => a.PartNumber - b.PartNumber);
+                        await completeMultipart({ uploadId, key, parts: sortedParts }).unwrap();
+                        resolve({ fileName: file.name, key, size: file.size });
                         return;
-                    } catch (err) {
-                        failOnce(err);
-                        return;
-                    }
+                    } catch (err) { failOnce(err); return; }
                 }
 
-                while (
-                    queue.length > 0 &&
-                    activeParts < activeConcurrencyLimit &&
-                    !isRejected
-                ) {
+                while (queue.length > 0 && activeParts < activeConcurrencyLimit && !isRejected) {
                     const partNumber = queue.shift();
                     activeParts++;
 
-                    uploadFilePart(
-                        file,
-                        uploadId,
-                        key,
-                        partNumber,
-                        activeChunkSize,
-                        (bytesUploaded) => {
-                            partProgressMap.set(partNumber, bytesUploaded);
-                            calculateTotalProgress();
-                        }
-                    )
-                        .then((partResult) => {
+                    uploadFilePart(file, uploadId, key, partNumber, activeChunkSize, onProgressDelta)
+                        .then((result) => {
                             if (isRejected) return;
-
-                            parts.push(partResult);
+                            parts.push(result);
                             activeParts--;
-
-                            const partSize = Math.min(
-                                activeChunkSize,
-                                file.size - (partNumber - 1) * activeChunkSize
-                            );
-
-                            partProgressMap.set(partNumber, partSize);
-                            calculateTotalProgress();
                             runNext();
                         })
                         .catch((err) => {
@@ -311,125 +248,118 @@ export const useFileTransfer = ({
                         });
                 }
             };
-
             runNext();
         });
     };
 
+    /**
+     * Limited parallel worker: Process items with a concurrency limit.
+     */
+    const runLimitedParallel = async (items, limit, worker) => {
+        const results = new Array(items.length);
+        let nextIndex = 0;
+        const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+            while (true) {
+                const i = nextIndex++;
+                if (i >= items.length) return;
+                results[i] = await worker(items[i], i);
+            }
+        });
+        await Promise.all(runners);
+        return results;
+    };
+
+    /**
+     * Handle the entire transfer: Optimization of progress updates and state.
+     */
     const handleTransfer = async () => {
-        if (!uploadedFiles.length) {
-            alert('Please add files first');
-            return;
-        }
+        if (!uploadedFiles.length) return alert('Please add files first');
 
         setIsUploading(true);
         setUploadProgress(0);
         setUploadSpeed(0);
         setUploadedBytes(0);
 
-        try {
-            const {
-                chunkSize: activeChunkSize,
-                concurrencyLimit: activeConcurrencyLimit
-            } = await measureUploadSpeed();
+        // Reset refs
+        uploadedBytesRef.current = 0;
+        startTimeRef.current = performance.now();
+        lastUpdateRef.current = 0;
+        speedSamplesRef.current = [];
 
-            // Flatten files
+        try {
+            const adaptive = await measureUploadSpeed();
+            const activeChunkSize = adaptive.chunkSize;
+            const activeConcurrencyLimit = adaptive.concurrencyLimit;
             const allFiles = [];
-            uploadedFiles.forEach((item) => {
-                if (item._isFolder) {
-                    allFiles.push(...item.files);
-                } else {
-                    allFiles.push(item);
+            uploadedFiles.forEach(item => item._isFolder ? allFiles.push(...item.files) : allFiles.push(item));
+            const totalBytes = allFiles.reduce((acc, f) => acc + f.size, 0);
+
+            const throttleProgressUpdate = (delta) => {
+                uploadedBytesRef.current += delta;
+                const now = performance.now();
+
+                if (now - lastUpdateRef.current > 150 || uploadedBytesRef.current === totalBytes) {
+                    lastUpdateRef.current = now;
+                    const totalUploaded = uploadedBytesRef.current;
+
+                    setUploadedBytes(totalUploaded);
+                    setUploadProgress(Math.round((totalUploaded / totalBytes) * 100));
+
+                    // Moving window speed (last 3 seconds)
+                    const samples = speedSamplesRef.current;
+                    samples.push({ time: now, bytes: totalUploaded });
+                    while (samples.length > 2 && now - samples[0].time > 3000) samples.shift();
+
+                    if (samples.length >= 2) {
+                        const first = samples[0];
+                        const last = samples[samples.length - 1];
+                        const dt = (last.time - first.time) / 1000;
+                        if (dt > 0) setUploadSpeed((last.bytes - first.bytes) / dt);
+                    } else {
+                        const dt = (now - startTimeRef.current) / 1000;
+                        if (dt > 0) setUploadSpeed(totalUploaded / dt);
+                    }
                 }
+            };
+
+            const fileConcurrency = isMobile ? 1 : 2;
+            const completedFiles = await runLimitedParallel(allFiles, fileConcurrency, async (file) => {
+                return processFile(file, throttleProgressUpdate, activeChunkSize, activeConcurrencyLimit);
             });
 
-            const totalBytes = allFiles.reduce((acc, f) => acc + f.size, 0);
-            const uploadedBytesMap = new Map();
-            const startTime = performance.now();
-            const completedFiles = [];
-
-            // Upload files sequentially to avoid massive real concurrency
-            for (const file of allFiles) {
-                const result = await processFile(
-                    file,
-                    (partPercentage) => {
-                        const fileId = `${file.name}-${file.size}-${file.lastModified}`;
-                        const fileUploadedBytes = partPercentage * file.size;
-
-                        uploadedBytesMap.set(fileId, fileUploadedBytes);
-
-                        const totalUploaded = Array.from(uploadedBytesMap.values()).reduce(
-                            (a, b) => a + b,
-                            0
-                        );
-
-                        setUploadedBytes(totalUploaded);
-                        setUploadProgress(
-                            Math.round((totalUploaded / totalBytes) * 100)
-                        );
-
-                        const durationInSeconds =
-                            (performance.now() - startTime) / 1000;
-
-                        if (durationInSeconds > 0) {
-                            setUploadSpeed(totalUploaded / durationInSeconds);
-                        }
-                    },
-                    activeChunkSize,
-                    activeConcurrencyLimit
-                );
-
-                completedFiles.push(result);
-            }
+            // Final push to ensure UI hits 100%
+            setUploadedBytes(totalBytes);
+            setUploadProgress(100);
 
             const finalizeResponse = await finalizeTransfer({
                 body: {
                     senderEmail,
                     recevierEmails: recipients,
-                    files: completedFiles.map((f) => ({
-                        name: f.fileName,
-                        key: f.key,
-                        size: f.size
-                    })),
+                    files: completedFiles.map(f => ({ name: f.fileName, key: f.key, size: f.size })),
                     totalSize: totalBytes,
                     expireIn: expiresIn === 'never' ? 'never' : `${expiresIn}d`,
                     password: password || undefined,
                     selfDestruct,
-                    downloadable:
-                        transferType === 'video' ? isDownloadAble : false,
+                    downloadable: transferType === 'video' ? isDownloadAble : false,
                     type: transferType === 'video' ? 'Video' : 'File'
                 },
                 params: {
                     getShareableLink: selectedMethod === 'link',
                     selfDestruct,
-                    isDownloadAble:
-                        transferType === 'video' ? isDownloadAble : false
+                    isDownloadAble: transferType === 'video' ? isDownloadAble : false
                 }
             }).unwrap();
 
-            if (finalizeResponse.shortId) {
-                setNewTransferId(finalizeResponse.shortId);
-            }
+            if (finalizeResponse.shortId) setNewTransferId(finalizeResponse.shortId);
+            if (selectedMethod === 'link' && finalizeResponse.shareLink) setGeneratedLink(finalizeResponse.shareLink);
+            else { alert('Transfer successful!'); setUploadedFiles([]); setRecipients([]); setMessage(''); }
 
-            if (selectedMethod === 'link' && finalizeResponse.shareLink) {
-                setGeneratedLink(finalizeResponse.shareLink);
-            } else {
-                alert('Transfer successful!');
-                setUploadedFiles([]);
-                setRecipients([]);
-                setMessage('');
-            }
         } catch (err) {
             console.error('Transfer error:', err);
-            alert(
-                'Transfer failed: ' +
-                    (err.data?.message || err.message || 'Unknown error')
-            );
+            const details = err?.data?.message || err?.data?.error || err?.message || 'Unknown error';
+            alert('Transfer failed: ' + details);
         } finally {
             setIsUploading(false);
-            setUploadProgress(0);
-            setUploadSpeed(0);
-            setUploadedBytes(0);
         }
     };
 
@@ -438,14 +368,7 @@ export const useFileTransfer = ({
         uploadProgress,
         uploadSpeed,
         uploadedBytes,
-        totalBytes: uploadedFiles.reduce(
-            (acc, item) =>
-                acc +
-                (item._isFolder
-                    ? item.files.reduce((a, b) => a + b.size, 0)
-                    : item.size),
-            0
-        ),
+        totalBytes: uploadedFiles.reduce((acc, item) => acc + (item._isFolder ? item.files.reduce((a, b) => a + b.size, 0) : item.size), 0),
         generatedLink,
         newTransferId,
         setGeneratedLink,
