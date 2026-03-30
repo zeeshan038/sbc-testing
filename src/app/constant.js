@@ -1,5 +1,5 @@
-export const BASE_URL = "http://localhost:3000"
-// export const BASE_URL = "https://sbcbackend.sendbycloud.com";
+// export const BASE_URL = "http://localhost:3000"
+export const BASE_URL = "https://sbcbackend.sendbycloud.com";
 // export const BASE_URL = "https://sendbycloud-backend.onrender.com";
 
 export const auth_url = "/api/user"
