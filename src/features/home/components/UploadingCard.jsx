@@ -1,5 +1,4 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import { formatSpeed } from '../../../shared/utils/formatTransfer';
 
 const UploadingCard = ({ uploadProgress, uploadSpeed, uploadedBytes, totalBytes, formatBytes }) => {
     const calculateRemainingTime = () => {
@@ -72,7 +71,7 @@ const UploadingCard = ({ uploadProgress, uploadSpeed, uploadedBytes, totalBytes,
                 
                 <div className="space-y-1">
                     <p className="text-[15px] font-medium text-white opacity-90">
-                        {formatBytes(uploadedBytes)} uploaded of {formatBytes(totalBytes)} ({formatBytes(uploadSpeed)}/s)
+                        {formatBytes(uploadedBytes)} uploaded of {formatBytes(totalBytes)} ({formatSpeed(uploadSpeed)})
                     </p>
                     {remainingTime && (
                         <p className="text-[14px] font-medium text-zinc-500">

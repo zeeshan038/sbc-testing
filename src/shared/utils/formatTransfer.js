@@ -11,14 +11,21 @@ export const formatBytes = (bytes) => {
 };
 
 /**
- * Formats speed in bytes/sec to human readable string
+ * Formats speed in bytes/sec to human readable bit-rate (Mbps/Kbps)
  */
-export const formatSpeed = (speed) => {
-    if (!speed || speed <= 0) return '0 KB/s';
-    const kbps = speed / 1024;
-    if (kbps < 1024) return `${kbps.toFixed(0)} KB/s`;
-    const mbps = kbps / 1024;
-    return `${mbps.toFixed(1)} MB/s`;
+export const formatSpeed = (bytesPerSecond) => {
+    if (!bytesPerSecond || bytesPerSecond <= 0) return '0 Kbps';
+    
+    // Convert Bytes/s to bits/s
+    const bps = bytesPerSecond * 8;
+    
+    if (bps < 1000) return `${bps.toFixed(0)} bps`;
+    
+    const kbps = bps / 1000; // Using 1000 for networking standards
+    if (kbps < 1000) return `${kbps.toFixed(0)} Kbps`;
+    
+    const mbps = kbps / 1000;
+    return `${mbps.toFixed(1)} Mbps`;
 };
 
 /**
